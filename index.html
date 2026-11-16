@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ことばマスター - 8つの言語を切り替えて学べる単語ゲーム</title>
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#2AB7CA">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ことばマスター">
+  <style>
+
+    :root {
+      --primary: #FF6B6B;
+      --secondary: #4ECDC4;
+      --accent: #FFE66D;
+      --dark: #2C3E50;
+      --light: #F7F9FC;
+      --success: #2ECC71;
+      --danger: #E74C3C;
+      --card-bg: #FFFFFF;
+      --radius: 16px;
+      --shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+      user-select: none;
+    }
+
+    body {
+      background-color: #EBF3F5;
+      color: var(--dark);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 12px;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 650px;
+      background: var(--light);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      min-height: 600px;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--secondary), #2AB7CA);
+      color: white;
+      padding: 16px;
+      text-align: center;
+      position: relative;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+
+    .nav-btn {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.25);
+      border: none;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.85rem;
+      backdrop-filter: blur(4px);
+    }
+
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.4);
+    }
+
+    main {
+      padding: 14px 20px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .screen {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ホーム画面 */
+    .hero-box {
+      text-align: center;
+      padding: 20px 10px;
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-title {
+      font-size: 1.3rem;
+      margin-bottom: 8px;
+      color: var(--dark);
+    }
+
+    .hero-desc {
+      font-size: 0.95rem;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .menu-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .btn {
+      background: white;
+      border: 3px solid #E0E6ED;
+      padding: 16px;
+      border-radius: var(--radius);
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: var(--dark);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-grade-5 { border-color: #4ECDC4; color: #16A085; }
+    .btn-grade-4 { border-color: #FFD166; color: #D68910; }
+    .btn-grade-3 { border-color: #FF6B6B; color: #C0392B; }
+
+    /* 級ボタンは「級名／補足」の2段組みに固定し、途中で改行させない */
+    .btn-grade {
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 2px;
+      padding: 12px 16px;
+    }
+
+    .grade-name {
+      white-space: nowrap;
+    }
+
+    .grade-sub {
+      white-space: nowrap;
+      font-size: 0.85rem;
+      font-weight: normal;
+    }
+
+    .btn-dict {
+      background: #34495E;
+      color: white;
+      border: none;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    /* 進捗パネル（ホーム／図鑑共通のバー） */
+    .progress-panel {
+      background: white;
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    .progress-panel h3 {
+      font-size: 0.95rem;
+      margin-bottom: 10px;
+      color: #2C3E50;
+    }
+
+    .prog-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .prog-row:last-child { margin-bottom: 0; }
+
+    .prog-label {
+      font-size: 0.85rem;
+      font-weight: bold;
+      white-space: nowrap;
+      width: 3.2em;
+    }
+
+    .prog-bar {
+      flex: 1;
+      height: 12px;
+      background: #EDF2F7;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .prog-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #4ECDC4, #2AB7CA);
+      transition: width 0.4s ease;
+    }
+
+    .prog-count {
+      font-size: 0.85rem;
+      white-space: nowrap;
+      color: #4A5568;
+      min-width: 5.2em;
+      text-align: right;
+    }
+
+    /* まちがい復習ボタン */
+    .btn-review {
+      border-color: #FF9F43;
+      color: #D35400;
+      justify-content: center;
+    }
+
+    .btn-review:disabled {
+      border-color: #CBD5E0;
+      color: #A0AEC0;
+      background: #F7FAFC;
+      cursor: default;
+    }
+
+    .btn-review:disabled:active { transform: none; }
+
+    /* 聞き取りモード */
+    .listen-title {
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: #2C3E50;
+      margin: 4px 0 10px;
+    }
+
+    .listen-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .btn-listen {
+      flex: 1;
+      padding: 12px 4px;
+      font-size: 1rem;
+      font-weight: bold;
+      font-family: inherit;
+      background: white;
+      border: 3px solid #A29BFE;
+      color: #6C5CE7;
+      border-radius: 14px;
+      cursor: pointer;
+    }
+
+    .btn-listen:active { transform: scale(0.97); }
+
+    /* 結果画面のふりかえりリスト */
+    .recap-wrap {
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+      margin-top: 16px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      text-align: left;
+    }
+
+    .recap-wrap h3 {
+      font-size: 1rem;
+      margin-bottom: 12px;
+      color: #2C3E50;
+      text-align: center;
+    }
+
+    .recap-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 4px;
+      border-bottom: 1px solid #EDF2F7;
+    }
+
+    .recap-item:last-child { border-bottom: none; }
+
+    .recap-mark {
+      font-size: 1.1rem;
+      font-weight: bold;
+      width: 1.4em;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .recap-mark.ok { color: #2ECC71; }
+    .recap-mark.ng { color: #E74C3C; }
+
+    .recap-body { flex: 1; min-width: 0; }
+
+    .recap-word {
+      font-weight: bold;
+      font-size: 1rem;
+    }
+
+    .recap-meaning {
+      font-size: 0.9rem;
+      color: #4A5568;
+    }
+
+    .recap-speak {
+      background: #EBF8FF;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 1.1rem;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* ゲーム画面 */
+    .game-status {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    .badge {
+      background: #EBF3F5;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: #555;
+    }
+
+    .card-display {
+      background: white;
+      border-radius: var(--radius);
+      padding: 22px 20px;
+      text-align: center;
+      box-shadow: var(--shadow);
+      border: 3px solid #E2E8F0;
+      position: relative;
+      min-height: 148px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .type-tag {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: bold;
+      background: #EDF2F7;
+      color: #4A5568;
+    }
+
+    .word-text {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--dark);
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      word-break: break-word;
+    }
+
+    .word-phonetic {
+      font-size: 0.9rem;
+      color: #718096;
+    }
+
+    .speak-btn {
+      margin-top: 16px;
+      background: var(--secondary);
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 999px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.12);
+    }
+
+    .speak-btn:active {
+      transform: scale(0.96);
+    }
+
+    .dict-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .dict-speak-btn {
+      background: #EBF3F5;
+      border: 2px solid #CBD5E0;
+      border-radius: 50%;
+      width: 38px;
+      height: 38px;
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .dict-speak-btn:active {
+      transform: scale(0.94);
+    }
+
+    #gameScreen {
+      gap: 10px;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    @media (max-width: 480px) {
+      .options-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .opt-btn {
+      background: white;
+      border: 2px solid #CBD5E0;
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: bold;
+      color: var(--dark);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      min-height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      /* ふりがなのある選択肢とない選択肢で文字の位置がずれないよう、
+         全ボタン共通の行の高さ（ふりがな分の余白込み）にする */
+      line-height: 2;
+    }
+
+    .opt-btn:hover {
+      background: #F7FAFC;
+      border-color: #A0AEC0;
+    }
+
+    .opt-btn.correct {
+      background: #DEF7EC !important;
+      border-color: #31C48D !important;
+      color: #03543F !important;
+    }
+
+    .opt-btn.wrong {
+      background: #FDE8E8 !important;
+      border-color: #F98080 !important;
+      color: #9B1C1C !important;
+    }
+
+    /* 解説ポップアップ/カード */
+    .explain-card {
+      display: none;
+      background: #FFFBEB;
+      border: 2px solid #FCD34D;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      /* 固定表示の「つぎへ」ボタンに末尾が隠れないようにする */
+      scroll-margin-bottom: 84px;
+    }
+
+    .explain-card.active {
+      display: block;
+    }
+
+    .explain-title {
+      font-weight: bold;
+      color: #92400E;
+      margin-bottom: 4px;
+    }
+
+    .explain-ex {
+      color: #4B5563;
+      font-style: italic;
+      margin-top: 4px;
+    }
+
+    .next-btn {
+      background: var(--secondary);
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      display: none;
+    }
+
+    .next-btn.active {
+      display: block;
+      /* 回答後は画面下部に固定表示し、スクロールしなくても押せるようにする */
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: calc(12px + env(safe-area-inset-bottom));
+      width: calc(100% - 32px);
+      max-width: 610px;
+      z-index: 30;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+    }
+
+    /* 回答後だけ表示する余白。固定ボタン（高さ約53px＋下余白12px）より
+       大きく確保し、解説カードがボタンの裏に隠れないようにする。
+       要素の大きさ自体は一切変えない。 */
+    .next-spacer {
+      display: none;
+      height: 80px;
+      flex-shrink: 0;
+    }
+
+    .next-spacer.active {
+      display: block;
+    }
+
+    /* クリア・結果画面 */
+    .result-box {
+      background: white;
+      border-radius: var(--radius);
+      padding: 30px 20px;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    .result-rank {
+      font-size: 4rem;
+      font-weight: 900;
+      color: var(--primary);
+      margin: 10px 0;
+    }
+
+    .result-score {
+      font-size: 1.3rem;
+      margin-bottom: 20px;
+    }
+
+    /* ずかん画面 */
+    .dict-controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .dict-tab {
+      flex: 1;
+      padding: 8px;
+      background: white;
+      border: 2px solid #E2E8F0;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    .dict-tab.active {
+      background: var(--secondary);
+      color: white;
+      border-color: var(--secondary);
+    }
+
+    .dict-list {
+      background: white;
+      border-radius: 12px;
+      padding: 12px;
+      max-height: 380px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border: 1px solid #E2E8F0;
+    }
+
+    .dict-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      border-bottom: 1px solid #EDF2F7;
+    }
+
+    .dict-item:last-child {
+      border-bottom: none;
+    }
+
+    .dict-en {
+      font-weight: bold;
+      color: var(--dark);
+    }
+
+    .dict-jp {
+      font-size: 0.85rem;
+      color: #4A5568;
+      line-height: 2;
+    }
+
+    .dict-star {
+      color: #CBD5E0;
+    }
+
+    .dict-star.learned {
+      color: #F6AD55;
+    }
+
+    ruby {
+      ruby-align: center;
+      ruby-position: over;
+    }
+
+    ruby rt {
+      font-size: 0.58em;
+      line-height: 1;
+      letter-spacing: 0;
+      color: #718096;
+    }
+
+    /* ふりがな付き文字が下がって見える問題への対策:
+       意味表示は ruby をそのまま使わず、全セグメントを
+       「ふりがな行＋本文行」の2段に組み替えて表示する。
+       ふりがなのない文字にも同じ高さのふりがな行（空白）を確保するので、
+       全ての文字の本文が必ず同じ高さにそろう。 */
+    .frow {
+      display: inline-flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-end;
+    }
+
+    .seg {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .frt {
+      font-size: 0.58em;
+      line-height: 1.15;
+      height: 1.15em;
+      letter-spacing: 0;
+      color: #718096;
+      white-space: nowrap;
+    }
+
+    .fbs {
+      line-height: 1.3;
+      white-space: nowrap;
+    }
+
+    #explainMeaning {
+      display: flex;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      column-gap: 6px;
+    }
+  
+
+    /* 言語セレクター */
+    .lang-title { font-size:0.95rem; font-weight:bold; color:#2C3E50; margin:2px 0 10px; }
+    .lang-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+    .lang-btn { background:white; border:3px solid #E0E6ED; padding:12px 10px; border-radius:14px;
+      font-size:1rem; font-weight:bold; color:#2C3E50; cursor:pointer; display:flex; align-items:center; gap:8px; }
+    .lang-btn .lang-flag { font-size:1.4rem; }
+    .lang-btn.active { border-color:#2AB7CA; background:#E6F7FA; box-shadow:0 4px 10px rgba(42,183,202,0.25); }
+    .lang-btn:active { transform:scale(0.98); }
+    .prog-label { width:4.8em !important; }
+    .word-sub { font-size:1rem; color:#718096; margin-top:-4px; margin-bottom:2px; letter-spacing:1px; }
+    .dict-sub { font-size:0.8rem; color:#888; font-weight:normal; }
+
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <header>
+    <button class="nav-btn" id="homeBtn" onclick="showScreen('homeScreen')" style="display:none;">ホーム</button>
+    <h1>ことばマスター</h1>
+  </header>
+
+  <main>
+    <!-- ホーム画面 -->
+    <div id="homeScreen" class="screen active">
+      <div class="hero-box">
+        <h2 class="hero-title">言語を切り替えて、世界のことばをおぼえよう！</h2>
+        <p class="hero-desc">8つの言語 × 3レベル、合計480問！タイム制限なし、自分のペースでまなべるよ。</p>
+      </div>
+
+      <p class="lang-title">🌍 学ぶ言語をえらぼう</p>
+      <div class="lang-grid" id="langGrid"></div>
+
+      <div class="progress-panel">
+        <h3 id="progTitle">⭐ マスターした単語</h3>
+        <div class="prog-row">
+          <span class="prog-label">レベル1</span>
+          <div class="prog-bar"><div class="prog-fill" id="progFill1"></div></div>
+          <span class="prog-count" id="progCount1">★ 0 / 20</span>
+        </div>
+        <div class="prog-row">
+          <span class="prog-label">レベル2</span>
+          <div class="prog-bar"><div class="prog-fill" id="progFill2"></div></div>
+          <span class="prog-count" id="progCount2">★ 0 / 20</span>
+        </div>
+        <div class="prog-row">
+          <span class="prog-label">レベル3</span>
+          <div class="prog-bar"><div class="prog-fill" id="progFill3"></div></div>
+          <span class="prog-count" id="progCount3">★ 0 / 20</span>
+        </div>
+      </div>
+
+      <div class="menu-group">
+        <button class="btn btn-grade btn-grade-5" onclick="startGame(1)">
+          <span class="grade-name" id="lvName1">レベル1 入門</span>
+          <span class="grade-sub" id="lvSub1">(基礎単語 20問)</span>
+        </button>
+        <button class="btn btn-grade btn-grade-4" onclick="startGame(2)">
+          <span class="grade-name" id="lvName2">レベル2 初級</span>
+          <span class="grade-sub" id="lvSub2">(日常生活の単語 20問)</span>
+        </button>
+        <button class="btn btn-grade btn-grade-3" onclick="startGame(3)">
+          <span class="grade-name" id="lvName3">レベル3 中級</span>
+          <span class="grade-sub" id="lvSub3">(表現・フレーズ 20問)</span>
+        </button>
+        <button class="btn btn-review" id="reviewBtn" onclick="startReview()" disabled>
+          <span id="reviewLabel">🔁 まちがえた単語をふくしゅう（0問）</span>
+        </button>
+        <button class="btn btn-dict" onclick="openDictionary()">
+          <span id="dictBtnLabel">📖 単語ずかん</span>
+        </button>
+      </div>
+
+      <p class="listen-title">👂 聞き取りチャレンジ（音だけで答える）</p>
+      <div class="listen-group">
+        <button class="btn-listen" onclick="startGame(1, 'listening')">レベル1</button>
+        <button class="btn-listen" onclick="startGame(2, 'listening')">レベル2</button>
+        <button class="btn-listen" onclick="startGame(3, 'listening')">レベル3</button>
+      </div>
+    </div>
+
+    <!-- クイズ画面 -->
+    <div id="gameScreen" class="screen">
+      <div class="game-status">
+        <span class="badge" id="gradeBadge">レベル1</span>
+        <span id="progressText">第 1 / 10 問</span>
+        <span id="scoreText">スコア: 0</span>
+      </div>
+
+      <div class="card-display">
+        <span class="type-tag" id="typeTag">単語</span>
+        <div class="word-text" id="questionWord">olá</div>
+        <div class="word-sub" id="questionSub"></div>
+        <button class="speak-btn" id="speakBtn" onclick="speakCurrent()">🔊 発音をきく</button>
+      </div>
+
+      <div class="options-grid" id="optionsContainer"></div>
+
+      <div class="explain-card" id="explainCard">
+        <div class="explain-title" id="explainTitle">せいかい！</div>
+        <div id="explainMeaning">意味: こんにちは</div>
+        <div class="explain-ex" id="explainExample"></div>
+      </div>
+
+      <button class="next-btn" id="nextBtn" onclick="nextQuestion()">つぎの問題へ ➔</button>
+      <div class="next-spacer" id="nextSpacer"></div>
+    </div>
+
+    <!-- クリア結果画面 -->
+    <div id="resultScreen" class="screen">
+      <div class="result-box">
+        <h2>ステージクリア！</h2>
+        <div class="result-rank" id="resultRank">S</div>
+        <div class="result-score" id="resultScore">10問ちゅう 10問 せいかい！</div>
+        <p id="resultComment" style="color:#666; margin-bottom:20px;">すばらしい！かんぺきです！</p>
+        <button class="btn btn-grade-5" style="justify-content:center;" onclick="showScreen('homeScreen')">ホームにもどる</button>
+      </div>
+
+      <div class="recap-wrap">
+        <h3>📝 こんかいのふりかえり</h3>
+        <div id="resultRecap"></div>
+      </div>
+    </div>
+
+    <!-- 図鑑画面 -->
+    <div id="dictScreen" class="screen">
+      <h2 id="dictTitle">単語ずかん</h2>
+      <p style="font-size:0.85rem; color:#666;">クイズでせいかいした問題には ⭐ がつくよ！</p>
+
+      <div class="dict-controls">
+        <div class="dict-tab active" onclick="filterDict(1, this)">レベル1</div>
+        <div class="dict-tab" onclick="filterDict(2, this)">レベル2</div>
+        <div class="dict-tab" onclick="filterDict(3, this)">レベル3</div>
+      </div>
+
+      <div class="progress-panel" style="margin-bottom:12px;">
+        <div class="prog-row">
+          <span class="prog-label" id="dictProgLabel">レベル1</span>
+          <div class="prog-bar"><div class="prog-fill" id="dictProgFill"></div></div>
+          <span class="prog-count" id="dictProgCount">★ 0 / 20</span>
+        </div>
+      </div>
+
+      <div class="dict-list" id="dictList"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+// --- 言語メタ情報 ---
+const LANGS = [{"id": "pt", "name": "ポルトガル語", "flag": "🇧🇷", "speech": "pt-BR"}, {"id": "ja", "name": "日本語", "flag": "🇯🇵", "speech": "ja-JP"}, {"id": "fr", "name": "フランス語", "flag": "🇫🇷", "speech": "fr-FR"}, {"id": "en", "name": "英語", "flag": "🇺🇸", "speech": "en-US"}, {"id": "es", "name": "スペイン語", "flag": "🇪🇸", "speech": "es-ES"}, {"id": "de", "name": "ドイツ語", "flag": "🇩🇪", "speech": "de-DE"}, {"id": "ko", "name": "韓国語", "flag": "🇰🇷", "speech": "ko-KR"}, {"id": "zh", "name": "中国語", "flag": "🇨🇳", "speech": "zh-CN"}];
+const LANG_MAP = {};
+LANGS.forEach(l => LANG_MAP[l.id] = l);
+const LEVEL_NAMES = {1: 'レベル1 入門', 2: 'レベル2 初級', 3: 'レベル3 中級'};
+const LEVEL_SUBS = {"pt": {"1": "基礎単語 20問", "2": "日常生活の単語 20問", "3": "表現・フレーズ 20問"}, "ja": {"1": "漢字の読み（やさしい）20問", "2": "漢字の読み（ふつう）20問", "3": "熟語・ことわざの意味 20問"}, "fr": {"1": "基礎単語 20問", "2": "日常生活の単語 20問", "3": "表現・フレーズ 20問"}, "en": {"1": "基礎単語 20問", "2": "日常生活の単語 20問", "3": "表現・フレーズ 20問"}, "es": {"1": "基礎単語 20問", "2": "日常生活の単語 20問", "3": "表現・フレーズ 20問"}, "de": {"1": "基礎単語 20問", "2": "日常生活の単語 20問", "3": "表現・フレーズ 20問"}, "ko": {"1": "基礎単語 20問", "2": "日常生活の単語 20問", "3": "表現・フレーズ 20問"}, "zh": {"1": "基礎単語 20問", "2": "日常生活の単語 20問", "3": "表現・フレーズ 20問"}};
+
+// --- 問題データベース（8言語 × 3レベル × 20問 = 480問） ---
+const QUESTION_DATABASE = {"en": {"1": [{"word": "apple", "meaning": "りんご", "options": ["りんご"], "type": "単語", "example": "I eat an apple. (わたしはりんごを食べます)"}, {"word": "cat", "meaning": "ねこ", "options": ["ねこ"], "type": "単語", "example": "The cat is cute. (そのねこはかわいいです)"}, {"word": "dog", "meaning": "いぬ", "options": ["いぬ"], "type": "単語", "example": "I have a dog. (わたしは犬を飼っています)"}, {"word": "book", "meaning": "ほん", "options": ["ほん"], "type": "単語", "example": "Read a book. (本を読みなさい)"}, {"word": "school", "meaning": "がっこう", "options": ["がっこう"], "type": "単語", "example": "I go to school. (わたしは学校に行きます)"}, {"word": "friend", "meaning": "ともだち", "options": ["ともだち"], "type": "単語", "example": "He is my friend. (彼はわたしの友達です)"}, {"word": "water", "meaning": "みず", "options": ["みず"], "type": "単語", "example": "Drink some water. (お水を飲みなさい)"}, {"word": "sun", "meaning": "たいよう", "options": ["たいよう"], "type": "単語", "example": "The sun is hot. (太陽はあついです)"}, {"word": "bird", "meaning": "とり", "options": ["とり"], "type": "単語", "example": "Look at the bird. (鳥をごらんなさい)"}, {"word": "house", "meaning": "いえ", "options": ["いえ"], "type": "単語", "example": "This is my house. (ここがわたしの家です)"}, {"word": "happy", "meaning": "うれしい", "options": ["うれしい"], "type": "単語", "example": "I am very happy. (わたしはとてもうれしいです)"}, {"word": "run", "meaning": "はしる", "options": ["はしる"], "type": "単語", "example": "Run fast! (はやく走りなさい！)"}, {"word": "eat", "meaning": "たべる", "options": ["たべる"], "type": "単語", "example": "Let's eat together. (いっしょに食べよう)"}, {"word": "big", "meaning": "おおきい", "options": ["おおきい"], "type": "単語", "example": "This box is big. (この箱は大きいです)"}, {"word": "small", "meaning": "ちいさい", "options": ["ちいさい"], "type": "単語", "example": "The dog is small. (その犬は小さいです)"}, {"word": "red", "meaning": "あかい", "options": ["あかい"], "type": "単語", "example": "The flower is red. (その花は赤いです)"}, {"word": "blue", "meaning": "あおい", "options": ["あおい"], "type": "単語", "example": "The sky is blue. (空は青いです)"}, {"word": "music", "meaning": "おんがく", "options": ["おんがく"], "type": "単語", "example": "I listen to music. (わたしは音楽を聴きます)"}, {"word": "mother", "meaning": "おかあさん", "options": ["おかあさん"], "type": "単語", "example": "My mother is kind. (わたしのお母さんは親切です)"}, {"word": "father", "meaning": "おとうさん", "options": ["おとうさん"], "type": "単語", "example": "My father is tall. (わたしのお父さんは背が高いです)"}], "2": [{"word": "train", "meaning": "でんしゃ", "options": ["でんしゃ"], "type": "単語", "example": "I go to school by train. (電車で学校に行きます)"}, {"word": "hospital", "meaning": "びょういん", "options": ["びょういん"], "type": "単語", "example": "The hospital is near my house. (病院は家の近くです)"}, {"word": "library", "meaning": "としょかん", "options": ["としょかん"], "type": "単語", "example": "I read books at the library. (図書館で本を読みます)"}, {"word": "teacher", "meaning": "せんせい", "options": ["せんせい"], "type": "単語", "example": "He is my teacher. (彼はわたしの先生です)"}, {"word": "student", "meaning": "がくせい", "options": ["がくせい"], "type": "単語", "example": "I am a student. (わたしは学生です)"}, {"word": "rain", "meaning": "あめ", "options": ["あめ"], "type": "単語", "example": "It is raining. (雨が降っています)"}, {"word": "snow", "meaning": "ゆき", "options": ["ゆき"], "type": "単語", "example": "Snow is white. (雪は白いです)"}, {"word": "sea", "meaning": "うみ", "options": ["うみ"], "type": "単語", "example": "I swim in the sea. (海で泳ぎます)"}, {"word": "mountain", "meaning": "やま", "options": ["やま"], "type": "単語", "example": "That mountain is high. (その山は高いです)"}, {"word": "river", "meaning": "かわ", "options": ["かわ"], "type": "単語", "example": "That river is long. (その川は長いです)"}, {"word": "breakfast", "meaning": "あさごはん", "options": ["あさごはん"], "type": "単語", "example": "I eat breakfast at seven. (7時に朝ごはんを食べます)"}, {"word": "bicycle", "meaning": "じてんしゃ", "options": ["じてんしゃ"], "type": "単語", "example": "I ride a bicycle. (自転車に乗ります)"}, {"word": "clock", "meaning": "とけい", "options": ["とけい"], "type": "単語", "example": "Look at the clock. (時計を見なさい)"}, {"word": "bag", "meaning": "かばん", "options": ["かばん"], "type": "単語", "example": "Put it in your bag. (かばんの中に入れなさい)"}, {"word": "shoes", "meaning": "くつ", "options": ["くつ"], "type": "単語", "example": "These shoes are new. (この靴は新しいです)"}, {"word": "buy", "meaning": "かう", "options": ["かう"], "type": "単語", "example": "I buy a book. (本を買います)"}, {"word": "swim", "meaning": "およぐ", "options": ["およぐ"], "type": "単語", "example": "I can swim. (わたしは泳げます)"}, {"word": "read", "meaning": "よむ", "options": ["よむ"], "type": "単語", "example": "I read a book every day. (毎日本を読みます)"}, {"word": "write", "meaning": "かく", "options": ["かく"], "type": "単語", "example": "Write your name. (名前を書きなさい)"}, {"word": "sing", "meaning": "うたう", "options": ["うたう"], "type": "単語", "example": "She sings well. (彼女は歌が上手です)"}], "3": [{"word": "hello", "meaning": "こんにちは", "options": ["こんにちは"], "type": "フレーズ", "example": "Hello, everyone! (みなさん、こんにちは！)"}, {"word": "thank you", "meaning": "ありがとう", "options": ["ありがとう"], "type": "フレーズ", "example": "Thank you very much. (どうもありがとう)"}, {"word": "please", "meaning": "おねがいします", "options": ["おねがいします"], "type": "フレーズ", "example": "Please sit down. (おねがいします、座ってください)"}, {"word": "excuse me", "meaning": "すみません", "options": ["すみません"], "type": "フレーズ", "example": "Excuse me, where is the station? (すみません、駅はどこですか？)"}, {"word": "goodbye", "meaning": "さようなら", "options": ["さようなら"], "type": "フレーズ", "example": "Goodbye, see you tomorrow. (さようなら、また明日)"}, {"word": "good morning", "meaning": "おはよう", "options": ["おはよう"], "type": "フレーズ", "example": "Good morning, teacher. (先生、おはようございます)"}, {"word": "good night", "meaning": "おやすみ", "options": ["おやすみ"], "type": "フレーズ", "example": "Good night, mother. (お母さん、おやすみなさい)"}, {"word": "welcome", "meaning": "ようこそ", "options": ["ようこそ"], "type": "フレーズ", "example": "Welcome to Japan. (日本へようこそ)"}, {"word": "congratulations", "meaning": "おめでとう", "options": ["おめでとう"], "type": "フレーズ", "example": "Congratulations on your win! (優勝おめでとう！)"}, {"word": "let's go", "meaning": "いこう！", "options": ["いこう！"], "type": "フレーズ", "example": "Let's go to the park! (公園に行こう！)"}, {"word": "travel", "meaning": "りょこう", "options": ["りょこう"], "type": "単語", "example": "Travel is fun. (旅行は楽しいです)"}, {"word": "delicious", "meaning": "おいしい", "options": ["おいしい"], "type": "単語", "example": "This cake is delicious. (このケーキはおいしいです)"}, {"word": "busy", "meaning": "いそがしい", "options": ["いそがしい"], "type": "単語", "example": "I am busy today. (今日は忙しいです)"}, {"word": "important", "meaning": "たいせつな", "options": ["たいせつな"], "type": "単語", "example": "This book is important. (この本は大切です)"}, {"word": "beautiful", "meaning": "うつくしい", "options": ["うつくしい"], "type": "単語", "example": "This garden is beautiful. (この庭は美しいです)"}, {"word": "fast", "meaning": "はやい", "options": ["はやい"], "type": "単語", "example": "This train is fast. (この電車は速いです)"}, {"word": "new", "meaning": "あたらしい", "options": ["あたらしい"], "type": "単語", "example": "This book is new. (この本は新しいです)"}, {"word": "old", "meaning": "ふるい", "options": ["ふるい"], "type": "単語", "example": "This book is old. (この本は古いです)"}, {"word": "easy", "meaning": "かんたんな", "options": ["かんたんな"], "type": "単語", "example": "This question is easy. (この問題は簡単です)"}, {"word": "difficult", "meaning": "むずかしい", "options": ["むずかしい"], "type": "単語", "example": "This question is difficult. (この問題は難しいです)"}]}, "pt": {"1": [{"word": "maçã", "meaning": "りんご", "options": ["りんご"], "type": "単語", "example": "Eu como uma maçã. (わたしはりんごを食べます)"}, {"word": "gato", "meaning": "ねこ", "options": ["ねこ"], "type": "単語", "example": "O gato é fofo. (そのねこはかわいいです)"}, {"word": "cachorro", "meaning": "いぬ", "options": ["いぬ"], "type": "単語", "example": "Eu tenho um cachorro. (わたしは犬を飼っています)"}, {"word": "livro", "meaning": "ほん", "options": ["ほん"], "type": "単語", "example": "Leia um livro. (本を読みなさい)"}, {"word": "escola", "meaning": "がっこう", "options": ["がっこう"], "type": "単語", "example": "Eu vou para a escola. (わたしは学校に行きます)"}, {"word": "amigo", "meaning": "ともだち", "options": ["ともだち"], "type": "単語", "example": "Ele é meu amigo. (彼はわたしの友達です)"}, {"word": "água", "meaning": "みず", "options": ["みず"], "type": "単語", "example": "Beba água. (お水を飲みなさい)"}, {"word": "sol", "meaning": "たいよう", "options": ["たいよう"], "type": "単語", "example": "O sol está quente. (太陽はあついです)"}, {"word": "pássaro", "meaning": "とり", "options": ["とり"], "type": "単語", "example": "Olhe o pássaro. (鳥をごらんなさい)"}, {"word": "casa", "meaning": "いえ", "options": ["いえ"], "type": "単語", "example": "Esta é minha casa. (ここがわたしの家です)"}, {"word": "feliz", "meaning": "うれしい", "options": ["うれしい"], "type": "単語", "example": "Estou muito feliz. (わたしはとてもうれしいです)"}, {"word": "correr", "meaning": "はしる", "options": ["はしる"], "type": "単語", "example": "Corra rápido! (はやく走りなさい！)"}, {"word": "comer", "meaning": "たべる", "options": ["たべる"], "type": "単語", "example": "Vamos comer juntos. (いっしょに食べよう)"}, {"word": "grande", "meaning": "おおきい", "options": ["おおきい"], "type": "単語", "example": "Esta caixa é grande. (この箱は大きいです)"}, {"word": "pequeno", "meaning": "ちいさい", "options": ["ちいさい"], "type": "単語", "example": "O cachorro é pequeno. (その犬は小さいです)"}, {"word": "vermelho", "meaning": "あかい", "options": ["あかい"], "type": "単語", "example": "A flor é vermelha. (その花は赤いです)"}, {"word": "azul", "meaning": "あおい", "options": ["あおい"], "type": "単語", "example": "O céu é azul. (空は青いです)"}, {"word": "música", "meaning": "おんがく", "options": ["おんがく"], "type": "単語", "example": "Eu ouço música. (わたしは音楽を聴きます)"}, {"word": "mãe", "meaning": "おかあさん", "options": ["おかあさん"], "type": "単語", "example": "Minha mãe é gentil. (わたしのお母さんは親切です)"}, {"word": "pai", "meaning": "おとうさん", "options": ["おとうさん"], "type": "単語", "example": "Meu pai é alto. (わたしのお父さんは背が高いです)"}], "2": [{"word": "trem", "meaning": "でんしゃ", "options": ["でんしゃ"], "type": "単語", "example": "Eu vou de trem para a escola. (電車で学校に行きます)"}, {"word": "hospital", "meaning": "びょういん", "options": ["びょういん"], "type": "単語", "example": "O hospital fica perto da minha casa. (病院は家の近くです)"}, {"word": "biblioteca", "meaning": "としょかん", "options": ["としょかん"], "type": "単語", "example": "Eu leio livros na biblioteca. (図書館で本を読みます)"}, {"word": "professor", "meaning": "せんせい", "options": ["せんせい"], "type": "単語", "example": "Ele é meu professor. (彼はわたしの先生です)"}, {"word": "aluno", "meaning": "がくせい", "options": ["がくせい"], "type": "単語", "example": "Eu sou aluno. (わたしは学生です)"}, {"word": "chuva", "meaning": "あめ", "options": ["あめ"], "type": "単語", "example": "A chuva está caindo. (雨が降っています)"}, {"word": "neve", "meaning": "ゆき", "options": ["ゆき"], "type": "単語", "example": "A neve é branca. (雪は白いです)"}, {"word": "mar", "meaning": "うみ", "options": ["うみ"], "type": "単語", "example": "Eu nado no mar. (海で泳ぎます)"}, {"word": "montanha", "meaning": "やま", "options": ["やま"], "type": "単語", "example": "A montanha é alta. (その山は高いです)"}, {"word": "rio", "meaning": "かわ", "options": ["かわ"], "type": "単語", "example": "O rio é longo. (その川は長いです)"}, {"word": "café da manhã", "meaning": "あさごはん", "options": ["あさごはん"], "type": "単語", "example": "Eu tomo café da manhã às sete. (7時に朝ごはんを食べます)"}, {"word": "bicicleta", "meaning": "じてんしゃ", "options": ["じてんしゃ"], "type": "単語", "example": "Eu ando de bicicleta. (自転車に乗ります)"}, {"word": "relógio", "meaning": "とけい", "options": ["とけい"], "type": "単語", "example": "Olhe o relógio. (時計を見なさい)"}, {"word": "bolsa", "meaning": "かばん", "options": ["かばん"], "type": "単語", "example": "Coloque isso na bolsa. (かばんの中に入れなさい)"}, {"word": "sapatos", "meaning": "くつ", "options": ["くつ"], "type": "単語", "example": "Estes sapatos são novos. (この靴は新しいです)"}, {"word": "comprar", "meaning": "かう", "options": ["かう"], "type": "単語", "example": "Eu compro um livro. (本を買います)"}, {"word": "nadar", "meaning": "およぐ", "options": ["およぐ"], "type": "単語", "example": "Eu sei nadar. (わたしは泳げます)"}, {"word": "ler", "meaning": "よむ", "options": ["よむ"], "type": "単語", "example": "Eu leio um livro todos os dias. (毎日本を読みます)"}, {"word": "escrever", "meaning": "かく", "options": ["かく"], "type": "単語", "example": "Escreva seu nome. (名前を書きなさい)"}, {"word": "cantar", "meaning": "うたう", "options": ["うたう"], "type": "単語", "example": "Ela canta bem. (彼女は歌が上手です)"}], "3": [{"word": "olá", "meaning": "こんにちは", "options": ["こんにちは"], "type": "フレーズ", "example": "Olá, pessoal! (みなさん、こんにちは！)"}, {"word": "obrigado", "meaning": "ありがとう", "options": ["ありがとう"], "type": "フレーズ", "example": "Muito obrigado. (どうもありがとう)"}, {"word": "por favor", "meaning": "おねがいします", "options": ["おねがいします"], "type": "フレーズ", "example": "Por favor, sente-se. (おねがいします、座ってください)"}, {"word": "com licença", "meaning": "すみません", "options": ["すみません"], "type": "フレーズ", "example": "Com licença, onde fica a estação? (すみません、駅はどこですか？)"}, {"word": "adeus", "meaning": "さようなら", "options": ["さようなら"], "type": "フレーズ", "example": "Adeus, até amanhã. (さようなら、また明日)"}, {"word": "bom dia", "meaning": "おはよう", "options": ["おはよう"], "type": "フレーズ", "example": "Bom dia, professor. (先生、おはようございます)"}, {"word": "boa noite", "meaning": "おやすみ", "options": ["おやすみ"], "type": "フレーズ", "example": "Boa noite, mãe. (お母さん、おやすみなさい)"}, {"word": "bem-vindo", "meaning": "ようこそ", "options": ["ようこそ"], "type": "フレーズ", "example": "Bem-vindo ao Japão. (日本へようこそ)"}, {"word": "parabéns", "meaning": "おめでとう", "options": ["おめでとう"], "type": "フレーズ", "example": "Parabéns pela vitória! (優勝おめでとう！)"}, {"word": "vamos", "meaning": "いこう！", "options": ["いこう！"], "type": "フレーズ", "example": "Vamos ao parque! (公園に行こう！)"}, {"word": "viagem", "meaning": "りょこう", "options": ["りょこう"], "type": "単語", "example": "A viagem é divertida. (旅行は楽しいです)"}, {"word": "delicioso", "meaning": "おいしい", "options": ["おいしい"], "type": "単語", "example": "Este bolo é delicioso. (このケーキはおいしいです)"}, {"word": "ocupado", "meaning": "いそがしい", "options": ["いそがしい"], "type": "単語", "example": "Estou ocupado hoje. (今日は忙しいです)"}, {"word": "importante", "meaning": "たいせつな", "options": ["たいせつな"], "type": "単語", "example": "Este livro é importante. (この本は大切です)"}, {"word": "bonito", "meaning": "うつくしい", "options": ["うつくしい"], "type": "単語", "example": "Este jardim é bonito. (この庭は美しいです)"}, {"word": "rápido", "meaning": "はやい", "options": ["はやい"], "type": "単語", "example": "Este trem é rápido. (この電車は速いです)"}, {"word": "novo", "meaning": "あたらしい", "options": ["あたらしい"], "type": "単語", "example": "Este livro é novo. (この本は新しいです)"}, {"word": "velho", "meaning": "ふるい", "options": ["ふるい"], "type": "単語", "example": "Este livro é velho. (この本は古いです)"}, {"word": "fácil", "meaning": "かんたんな", "options": ["かんたんな"], "type": "単語", "example": "Esta pergunta é fácil. (この問題は簡単です)"}, {"word": "difícil", "meaning": "むずかしい", "options": ["むずかしい"], "type": "単語", "example": "Esta pergunta é difícil. (この問題は難しいです)"}]}, "fr": {"1": [{"word": "pomme", "meaning": "りんご", "options": ["りんご"], "type": "単語", "example": "Je mange une pomme. (わたしはりんごを食べます)"}, {"word": "chat", "meaning": "ねこ", "options": ["ねこ"], "type": "単語", "example": "Le chat est mignon. (そのねこはかわいいです)"}, {"word": "chien", "meaning": "いぬ", "options": ["いぬ"], "type": "単語", "example": "J'ai un chien. (わたしは犬を飼っています)"}, {"word": "livre", "meaning": "ほん", "options": ["ほん"], "type": "単語", "example": "Lis un livre. (本を読みなさい)"}, {"word": "école", "meaning": "がっこう", "options": ["がっこう"], "type": "単語", "example": "Je vais à l'école. (わたしは学校に行きます)"}, {"word": "ami", "meaning": "ともだち", "options": ["ともだち"], "type": "単語", "example": "Il est mon ami. (彼はわたしの友達です)"}, {"word": "eau", "meaning": "みず", "options": ["みず"], "type": "単語", "example": "Bois de l'eau. (お水を飲みなさい)"}, {"word": "soleil", "meaning": "たいよう", "options": ["たいよう"], "type": "単語", "example": "Le soleil est chaud. (太陽はあついです)"}, {"word": "oiseau", "meaning": "とり", "options": ["とり"], "type": "単語", "example": "Regarde l'oiseau. (鳥をごらんなさい)"}, {"word": "maison", "meaning": "いえ", "options": ["いえ"], "type": "単語", "example": "C'est ma maison. (ここがわたしの家です)"}, {"word": "heureux", "meaning": "うれしい", "options": ["うれしい"], "type": "単語", "example": "Je suis très heureux. (わたしはとてもうれしいです)"}, {"word": "courir", "meaning": "はしる", "options": ["はしる"], "type": "単語", "example": "Cours vite ! (はやく走りなさい！)"}, {"word": "manger", "meaning": "たべる", "options": ["たべる"], "type": "単語", "example": "Mangeons ensemble. (いっしょに食べよう)"}, {"word": "grand", "meaning": "おおきい", "options": ["おおきい"], "type": "単語", "example": "Cette boîte est grande. (この箱は大きいです)"}, {"word": "petit", "meaning": "ちいさい", "options": ["ちいさい"], "type": "単語", "example": "Le chien est petit. (その犬は小さいです)"}, {"word": "rouge", "meaning": "あかい", "options": ["あかい"], "type": "単語", "example": "La fleur est rouge. (その花は赤いです)"}, {"word": "bleu", "meaning": "あおい", "options": ["あおい"], "type": "単語", "example": "Le ciel est bleu. (空は青いです)"}, {"word": "musique", "meaning": "おんがく", "options": ["おんがく"], "type": "単語", "example": "J'écoute de la musique. (わたしは音楽を聴きます)"}, {"word": "mère", "meaning": "おかあさん", "options": ["おかあさん"], "type": "単語", "example": "Ma mère est gentille. (わたしのお母さんは親切です)"}, {"word": "père", "meaning": "おとうさん", "options": ["おとうさん"], "type": "単語", "example": "Mon père est grand. (わたしのお父さんは背が高いです)"}], "2": [{"word": "train", "meaning": "でんしゃ", "options": ["でんしゃ"], "type": "単語", "example": "Je vais à l'école en train. (電車で学校に行きます)"}, {"word": "hôpital", "meaning": "びょういん", "options": ["びょういん"], "type": "単語", "example": "L'hôpital est près de ma maison. (病院は家の近くです)"}, {"word": "bibliothèque", "meaning": "としょかん", "options": ["としょかん"], "type": "単語", "example": "Je lis des livres à la bibliothèque. (図書館で本を読みます)"}, {"word": "professeur", "meaning": "せんせい", "options": ["せんせい"], "type": "単語", "example": "Il est mon professeur. (彼はわたしの先生です)"}, {"word": "élève", "meaning": "がくせい", "options": ["がくせい"], "type": "単語", "example": "Je suis élève. (わたしは学生です)"}, {"word": "pluie", "meaning": "あめ", "options": ["あめ"], "type": "単語", "example": "La pluie tombe. (雨が降っています)"}, {"word": "neige", "meaning": "ゆき", "options": ["ゆき"], "type": "単語", "example": "La neige est blanche. (雪は白いです)"}, {"word": "mer", "meaning": "うみ", "options": ["うみ"], "type": "単語", "example": "Je nage dans la mer. (海で泳ぎます)"}, {"word": "montagne", "meaning": "やま", "options": ["やま"], "type": "単語", "example": "La montagne est haute. (その山は高いです)"}, {"word": "rivière", "meaning": "かわ", "options": ["かわ"], "type": "単語", "example": "La rivière est longue. (その川は長いです)"}, {"word": "petit déjeuner", "meaning": "あさごはん", "options": ["あさごはん"], "type": "単語", "example": "Je prends le petit déjeuner à sept heures. (7時に朝ごはんを食べます)"}, {"word": "vélo", "meaning": "じてんしゃ", "options": ["じてんしゃ"], "type": "単語", "example": "Je fais du vélo. (自転車に乗ります)"}, {"word": "montre", "meaning": "とけい", "options": ["とけい"], "type": "単語", "example": "Regarde la montre. (時計を見なさい)"}, {"word": "sac", "meaning": "かばん", "options": ["かばん"], "type": "単語", "example": "Mets-le dans ton sac. (かばんの中に入れなさい)"}, {"word": "chaussures", "meaning": "くつ", "options": ["くつ"], "type": "単語", "example": "Ces chaussures sont neuves. (この靴は新しいです)"}, {"word": "acheter", "meaning": "かう", "options": ["かう"], "type": "単語", "example": "J'achète un livre. (本を買います)"}, {"word": "nager", "meaning": "およぐ", "options": ["およぐ"], "type": "単語", "example": "Je sais nager. (わたしは泳げます)"}, {"word": "lire", "meaning": "よむ", "options": ["よむ"], "type": "単語", "example": "Je lis un livre tous les jours. (毎日本を読みます)"}, {"word": "écrire", "meaning": "かく", "options": ["かく"], "type": "単語", "example": "Écris ton nom. (名前を書きなさい)"}, {"word": "chanter", "meaning": "うたう", "options": ["うたう"], "type": "単語", "example": "Elle chante bien. (彼女は歌が上手です)"}], "3": [{"word": "bonjour", "meaning": "こんにちは", "options": ["こんにちは"], "type": "フレーズ", "example": "Bonjour, tout le monde ! (みなさん、こんにちは！)"}, {"word": "merci", "meaning": "ありがとう", "options": ["ありがとう"], "type": "フレーズ", "example": "Merci beaucoup. (どうもありがとう)"}, {"word": "s'il vous plaît", "meaning": "おねがいします", "options": ["おねがいします"], "type": "フレーズ", "example": "S'il vous plaît, asseyez-vous. (おねがいします、座ってください)"}, {"word": "excusez-moi", "meaning": "すみません", "options": ["すみません"], "type": "フレーズ", "example": "Excusez-moi, où est la gare ? (すみません、駅はどこですか？)"}, {"word": "au revoir", "meaning": "さようなら", "options": ["さようなら"], "type": "フレーズ", "example": "Au revoir, à demain. (さようなら、また明日)"}, {"word": "enchanté", "meaning": "はじめまして", "options": ["はじめまして"], "type": "フレーズ", "example": "Enchanté de vous rencontrer. (はじめまして、よろしくお願いします)"}, {"word": "bonne nuit", "meaning": "おやすみ", "options": ["おやすみ"], "type": "フレーズ", "example": "Bonne nuit, maman. (お母さん、おやすみなさい)"}, {"word": "bienvenue", "meaning": "ようこそ", "options": ["ようこそ"], "type": "フレーズ", "example": "Bienvenue au Japon. (日本へようこそ)"}, {"word": "félicitations", "meaning": "おめでとう", "options": ["おめでとう"], "type": "フレーズ", "example": "Félicitations pour ta victoire ! (優勝おめでとう！)"}, {"word": "allons-y", "meaning": "いこう！", "options": ["いこう！"], "type": "フレーズ", "example": "Allons au parc ! (公園に行こう！)"}, {"word": "voyage", "meaning": "りょこう", "options": ["りょこう"], "type": "単語", "example": "Le voyage est amusant. (旅行は楽しいです)"}, {"word": "délicieux", "meaning": "おいしい", "options": ["おいしい"], "type": "単語", "example": "Ce gâteau est délicieux. (このケーキはおいしいです)"}, {"word": "occupé", "meaning": "いそがしい", "options": ["いそがしい"], "type": "単語", "example": "Je suis occupé aujourd'hui. (今日は忙しいです)"}, {"word": "important", "meaning": "たいせつな", "options": ["たいせつな"], "type": "単語", "example": "Ce livre est important. (この本は大切です)"}, {"word": "beau", "meaning": "うつくしい", "options": ["うつくしい"], "type": "単語", "example": "Ce jardin est beau. (この庭は美しいです)"}, {"word": "rapide", "meaning": "はやい", "options": ["はやい"], "type": "単語", "example": "Ce train est rapide. (この電車は速いです)"}, {"word": "nouveau", "meaning": "あたらしい", "options": ["あたらしい"], "type": "単語", "example": "Ce livre est nouveau. (この本は新しいです)"}, {"word": "vieux", "meaning": "ふるい", "options": ["ふるい"], "type": "単語", "example": "Ce livre est vieux. (この本は古いです)"}, {"word": "facile", "meaning": "かんたんな", "options": ["かんたんな"], "type": "単語", "example": "Cette question est facile. (この問題は簡単です)"}, {"word": "difficile", "meaning": "むずかしい", "options": ["むずかしい"], "type": "単語", "example": "Cette question est difficile. (この問題は難しいです)"}]}, "es": {"1": [{"word": "manzana", "meaning": "りんご", "options": ["りんご"], "type": "単語", "example": "Como una manzana. (わたしはりんごを食べます)"}, {"word": "gato", "meaning": "ねこ", "options": ["ねこ"], "type": "単語", "example": "El gato es lindo. (そのねこはかわいいです)"}, {"word": "perro", "meaning": "いぬ", "options": ["いぬ"], "type": "単語", "example": "Tengo un perro. (わたしは犬を飼っています)"}, {"word": "libro", "meaning": "ほん", "options": ["ほん"], "type": "単語", "example": "Lee un libro. (本を読みなさい)"}, {"word": "escuela", "meaning": "がっこう", "options": ["がっこう"], "type": "単語", "example": "Voy a la escuela. (わたしは学校に行きます)"}, {"word": "amigo", "meaning": "ともだち", "options": ["ともだち"], "type": "単語", "example": "Él es mi amigo. (彼はわたしの友達です)"}, {"word": "agua", "meaning": "みず", "options": ["みず"], "type": "単語", "example": "Bebe agua. (お水を飲みなさい)"}, {"word": "sol", "meaning": "たいよう", "options": ["たいよう"], "type": "単語", "example": "El sol es caliente. (太陽はあついです)"}, {"word": "pájaro", "meaning": "とり", "options": ["とり"], "type": "単語", "example": "Mira el pájaro. (鳥をごらんなさい)"}, {"word": "casa", "meaning": "いえ", "options": ["いえ"], "type": "単語", "example": "Esta es mi casa. (ここがわたしの家です)"}, {"word": "feliz", "meaning": "うれしい", "options": ["うれしい"], "type": "単語", "example": "Estoy muy feliz. (わたしはとてもうれしいです)"}, {"word": "correr", "meaning": "はしる", "options": ["はしる"], "type": "単語", "example": "¡Corre rápido! (はやく走りなさい！)"}, {"word": "comer", "meaning": "たべる", "options": ["たべる"], "type": "単語", "example": "Comamos juntos. (いっしょに食べよう)"}, {"word": "grande", "meaning": "おおきい", "options": ["おおきい"], "type": "単語", "example": "Esta caja es grande. (この箱は大きいです)"}, {"word": "pequeño", "meaning": "ちいさい", "options": ["ちいさい"], "type": "単語", "example": "El perro es pequeño. (その犬は小さいです)"}, {"word": "rojo", "meaning": "あかい", "options": ["あかい"], "type": "単語", "example": "La flor es roja. (その花は赤いです)"}, {"word": "azul", "meaning": "あおい", "options": ["あおい"], "type": "単語", "example": "El cielo es azul. (空は青いです)"}, {"word": "música", "meaning": "おんがく", "options": ["おんがく"], "type": "単語", "example": "Escucho música. (わたしは音楽を聴きます)"}, {"word": "madre", "meaning": "おかあさん", "options": ["おかあさん"], "type": "単語", "example": "Mi madre es amable. (わたしのお母さんは親切です)"}, {"word": "padre", "meaning": "おとうさん", "options": ["おとうさん"], "type": "単語", "example": "Mi padre es alto. (わたしのお父さんは背が高いです)"}], "2": [{"word": "tren", "meaning": "でんしゃ", "options": ["でんしゃ"], "type": "単語", "example": "Voy a la escuela en tren. (電車で学校に行きます)"}, {"word": "hospital", "meaning": "びょういん", "options": ["びょういん"], "type": "単語", "example": "El hospital está cerca de mi casa. (病院は家の近くです)"}, {"word": "biblioteca", "meaning": "としょかん", "options": ["としょかん"], "type": "単語", "example": "Leo libros en la biblioteca. (図書館で本を読みます)"}, {"word": "profesor", "meaning": "せんせい", "options": ["せんせい"], "type": "単語", "example": "Él es mi profesor. (彼はわたしの先生です)"}, {"word": "estudiante", "meaning": "がくせい", "options": ["がくせい"], "type": "単語", "example": "Soy estudiante. (わたしは学生です)"}, {"word": "lluvia", "meaning": "あめ", "options": ["あめ"], "type": "単語", "example": "La lluvia cae. (雨が降っています)"}, {"word": "nieve", "meaning": "ゆき", "options": ["ゆき"], "type": "単語", "example": "La nieve es blanca. (雪は白いです)"}, {"word": "mar", "meaning": "うみ", "options": ["うみ"], "type": "単語", "example": "Nado en el mar. (海で泳ぎます)"}, {"word": "montaña", "meaning": "やま", "options": ["やま"], "type": "単語", "example": "La montaña es alta. (その山は高いです)"}, {"word": "río", "meaning": "かわ", "options": ["かわ"], "type": "単語", "example": "El río es largo. (その川は長いです)"}, {"word": "desayuno", "meaning": "あさごはん", "options": ["あさごはん"], "type": "単語", "example": "Tomo el desayuno a las siete. (7時に朝ごはんを食べます)"}, {"word": "bicicleta", "meaning": "じてんしゃ", "options": ["じてんしゃ"], "type": "単語", "example": "Ando en bicicleta. (自転車に乗ります)"}, {"word": "reloj", "meaning": "とけい", "options": ["とけい"], "type": "単語", "example": "Mira el reloj. (時計を見なさい)"}, {"word": "bolso", "meaning": "かばん", "options": ["かばん"], "type": "単語", "example": "Ponlo en tu bolso. (かばんの中に入れなさい)"}, {"word": "zapatos", "meaning": "くつ", "options": ["くつ"], "type": "単語", "example": "Estos zapatos son nuevos. (この靴は新しいです)"}, {"word": "comprar", "meaning": "かう", "options": ["かう"], "type": "単語", "example": "Compro un libro. (本を買います)"}, {"word": "nadar", "meaning": "およぐ", "options": ["およぐ"], "type": "単語", "example": "Sé nadar. (わたしは泳げます)"}, {"word": "leer", "meaning": "よむ", "options": ["よむ"], "type": "単語", "example": "Leo un libro todos los días. (毎日本を読みます)"}, {"word": "escribir", "meaning": "かく", "options": ["かく"], "type": "単語", "example": "Escribe tu nombre. (名前を書きなさい)"}, {"word": "cantar", "meaning": "うたう", "options": ["うたう"], "type": "単語", "example": "Ella canta bien. (彼女は歌が上手です)"}], "3": [{"word": "hola", "meaning": "こんにちは", "options": ["こんにちは"], "type": "フレーズ", "example": "¡Hola a todos! (みなさん、こんにちは！)"}, {"word": "gracias", "meaning": "ありがとう", "options": ["ありがとう"], "type": "フレーズ", "example": "Muchas gracias. (どうもありがとう)"}, {"word": "por favor", "meaning": "おねがいします", "options": ["おねがいします"], "type": "フレーズ", "example": "Por favor, siéntate. (おねがいします、座ってください)"}, {"word": "perdón", "meaning": "すみません", "options": ["すみません"], "type": "フレーズ", "example": "Perdón, ¿dónde está la estación? (すみません、駅はどこですか？)"}, {"word": "adiós", "meaning": "さようなら", "options": ["さようなら"], "type": "フレーズ", "example": "Adiós, hasta mañana. (さようなら、また明日)"}, {"word": "buenos días", "meaning": "おはよう", "options": ["おはよう"], "type": "フレーズ", "example": "Buenos días, profesor. (先生、おはようございます)"}, {"word": "buenas noches", "meaning": "おやすみ", "options": ["おやすみ"], "type": "フレーズ", "example": "Buenas noches, mamá. (お母さん、おやすみなさい)"}, {"word": "bienvenido", "meaning": "ようこそ", "options": ["ようこそ"], "type": "フレーズ", "example": "Bienvenido a Japón. (日本へようこそ)"}, {"word": "felicidades", "meaning": "おめでとう", "options": ["おめでとう"], "type": "フレーズ", "example": "¡Felicidades por tu victoria! (優勝おめでとう！)"}, {"word": "vamos", "meaning": "いこう！", "options": ["いこう！"], "type": "フレーズ", "example": "¡Vamos al parque! (公園に行こう！)"}, {"word": "viaje", "meaning": "りょこう", "options": ["りょこう"], "type": "単語", "example": "El viaje es divertido. (旅行は楽しいです)"}, {"word": "delicioso", "meaning": "おいしい", "options": ["おいしい"], "type": "単語", "example": "Este pastel es delicioso. (このケーキはおいしいです)"}, {"word": "ocupado", "meaning": "いそがしい", "options": ["いそがしい"], "type": "単語", "example": "Estoy ocupado hoy. (今日は忙しいです)"}, {"word": "importante", "meaning": "たいせつな", "options": ["たいせつな"], "type": "単語", "example": "Este libro es importante. (この本は大切です)"}, {"word": "hermoso", "meaning": "うつくしい", "options": ["うつくしい"], "type": "単語", "example": "Este jardín es hermoso. (この庭は美しいです)"}, {"word": "rápido", "meaning": "はやい", "options": ["はやい"], "type": "単語", "example": "Este tren es rápido. (この電車は速いです)"}, {"word": "nuevo", "meaning": "あたらしい", "options": ["あたらしい"], "type": "単語", "example": "Este libro es nuevo. (この本は新しいです)"}, {"word": "viejo", "meaning": "ふるい", "options": ["ふるい"], "type": "単語", "example": "Este libro es viejo. (この本は古いです)"}, {"word": "fácil", "meaning": "かんたんな", "options": ["かんたんな"], "type": "単語", "example": "Esta pregunta es fácil. (この問題は簡単です)"}, {"word": "difícil", "meaning": "むずかしい", "options": ["むずかしい"], "type": "単語", "example": "Esta pregunta es difícil. (この問題は難しいです)"}]}, "de": {"1": [{"word": "Apfel", "meaning": "りんご", "options": ["りんご"], "type": "単語", "example": "Ich esse einen Apfel. (わたしはりんごを食べます)"}, {"word": "Katze", "meaning": "ねこ", "options": ["ねこ"], "type": "単語", "example": "Die Katze ist süß. (そのねこはかわいいです)"}, {"word": "Hund", "meaning": "いぬ", "options": ["いぬ"], "type": "単語", "example": "Ich habe einen Hund. (わたしは犬を飼っています)"}, {"word": "Buch", "meaning": "ほん", "options": ["ほん"], "type": "単語", "example": "Lies ein Buch. (本を読みなさい)"}, {"word": "Schule", "meaning": "がっこう", "options": ["がっこう"], "type": "単語", "example": "Ich gehe zur Schule. (わたしは学校に行きます)"}, {"word": "Freund", "meaning": "ともだち", "options": ["ともだち"], "type": "単語", "example": "Er ist mein Freund. (彼はわたしの友達です)"}, {"word": "Wasser", "meaning": "みず", "options": ["みず"], "type": "単語", "example": "Trink Wasser. (お水を飲みなさい)"}, {"word": "Sonne", "meaning": "たいよう", "options": ["たいよう"], "type": "単語", "example": "Die Sonne ist heiß. (太陽はあついです)"}, {"word": "Vogel", "meaning": "とり", "options": ["とり"], "type": "単語", "example": "Sieh dir den Vogel an. (鳥をごらんなさい)"}, {"word": "Haus", "meaning": "いえ", "options": ["いえ"], "type": "単語", "example": "Das ist mein Haus. (ここがわたしの家です)"}, {"word": "glücklich", "meaning": "うれしい", "options": ["うれしい"], "type": "単語", "example": "Ich bin sehr glücklich. (わたしはとてもうれしいです)"}, {"word": "laufen", "meaning": "はしる", "options": ["はしる"], "type": "単語", "example": "Lauf schnell! (はやく走りなさい！)"}, {"word": "essen", "meaning": "たべる", "options": ["たべる"], "type": "単語", "example": "Essen wir zusammen. (いっしょに食べよう)"}, {"word": "groß", "meaning": "おおきい", "options": ["おおきい"], "type": "単語", "example": "Diese Kiste ist groß. (この箱は大きいです)"}, {"word": "klein", "meaning": "ちいさい", "options": ["ちいさい"], "type": "単語", "example": "Der Hund ist klein. (その犬は小さいです)"}, {"word": "rot", "meaning": "あかい", "options": ["あかい"], "type": "単語", "example": "Die Blume ist rot. (その花は赤いです)"}, {"word": "blau", "meaning": "あおい", "options": ["あおい"], "type": "単語", "example": "Der Himmel ist blau. (空は青いです)"}, {"word": "Musik", "meaning": "おんがく", "options": ["おんがく"], "type": "単語", "example": "Ich höre Musik. (わたしは音楽を聴きます)"}, {"word": "Mutter", "meaning": "おかあさん", "options": ["おかあさん"], "type": "単語", "example": "Meine Mutter ist nett. (わたしのお母さんは親切です)"}, {"word": "Vater", "meaning": "おとうさん", "options": ["おとうさん"], "type": "単語", "example": "Mein Vater ist groß. (わたしのお父さんは背が高いです)"}], "2": [{"word": "Zug", "meaning": "でんしゃ", "options": ["でんしゃ"], "type": "単語", "example": "Ich fahre mit dem Zug zur Schule. (電車で学校に行きます)"}, {"word": "Krankenhaus", "meaning": "びょういん", "options": ["びょういん"], "type": "単語", "example": "Das Krankenhaus ist in der Nähe meines Hauses. (病院は家の近くです)"}, {"word": "Bibliothek", "meaning": "としょかん", "options": ["としょかん"], "type": "単語", "example": "Ich lese Bücher in der Bibliothek. (図書館で本を読みます)"}, {"word": "Lehrer", "meaning": "せんせい", "options": ["せんせい"], "type": "単語", "example": "Er ist mein Lehrer. (彼はわたしの先生です)"}, {"word": "Schüler", "meaning": "がくせい", "options": ["がくせい"], "type": "単語", "example": "Ich bin Schüler. (わたしは学生です)"}, {"word": "Regen", "meaning": "あめ", "options": ["あめ"], "type": "単語", "example": "Der Regen fällt. (雨が降っています)"}, {"word": "Schnee", "meaning": "ゆき", "options": ["ゆき"], "type": "単語", "example": "Der Schnee ist weiß. (雪は白いです)"}, {"word": "Meer", "meaning": "うみ", "options": ["うみ"], "type": "単語", "example": "Ich schwimme im Meer. (海で泳ぎます)"}, {"word": "Berg", "meaning": "やま", "options": ["やま"], "type": "単語", "example": "Der Berg ist hoch. (その山は高いです)"}, {"word": "Fluss", "meaning": "かわ", "options": ["かわ"], "type": "単語", "example": "Der Fluss ist lang. (その川は長いです)"}, {"word": "Frühstück", "meaning": "あさごはん", "options": ["あさごはん"], "type": "単語", "example": "Ich frühstücke um sieben Uhr. (7時に朝ごはんを食べます)"}, {"word": "Fahrrad", "meaning": "じてんしゃ", "options": ["じてんしゃ"], "type": "単語", "example": "Ich fahre Fahrrad. (自転車に乗ります)"}, {"word": "Uhr", "meaning": "とけい", "options": ["とけい"], "type": "単語", "example": "Schau auf die Uhr. (時計を見なさい)"}, {"word": "Tasche", "meaning": "かばん", "options": ["かばん"], "type": "単語", "example": "Leg es in deine Tasche. (かばんの中に入れなさい)"}, {"word": "Schuhe", "meaning": "くつ", "options": ["くつ"], "type": "単語", "example": "Diese Schuhe sind neu. (この靴は新しいです)"}, {"word": "kaufen", "meaning": "かう", "options": ["かう"], "type": "単語", "example": "Ich kaufe ein Buch. (本を買います)"}, {"word": "schwimmen", "meaning": "およぐ", "options": ["およぐ"], "type": "単語", "example": "Ich kann schwimmen. (わたしは泳げます)"}, {"word": "lesen", "meaning": "よむ", "options": ["よむ"], "type": "単語", "example": "Ich lese jeden Tag ein Buch. (毎日本を読みます)"}, {"word": "schreiben", "meaning": "かく", "options": ["かく"], "type": "単語", "example": "Schreib deinen Namen. (名前を書きなさい)"}, {"word": "singen", "meaning": "うたう", "options": ["うたう"], "type": "単語", "example": "Sie singt gut. (彼女は歌が上手です)"}], "3": [{"word": "hallo", "meaning": "こんにちは", "options": ["こんにちは"], "type": "フレーズ", "example": "Hallo, alle zusammen! (みなさん、こんにちは！)"}, {"word": "danke", "meaning": "ありがとう", "options": ["ありがとう"], "type": "フレーズ", "example": "Vielen Dank. (どうもありがとう)"}, {"word": "bitte", "meaning": "おねがいします", "options": ["おねがいします"], "type": "フレーズ", "example": "Bitte setz dich. (おねがいします、座ってください)"}, {"word": "Entschuldigung", "meaning": "すみません", "options": ["すみません"], "type": "フレーズ", "example": "Entschuldigung, wo ist der Bahnhof? (すみません、駅はどこですか？)"}, {"word": "auf Wiedersehen", "meaning": "さようなら", "options": ["さようなら"], "type": "フレーズ", "example": "Auf Wiedersehen, bis morgen. (さようなら、また明日)"}, {"word": "guten Morgen", "meaning": "おはよう", "options": ["おはよう"], "type": "フレーズ", "example": "Guten Morgen, Lehrer. (先生、おはようございます)"}, {"word": "gute Nacht", "meaning": "おやすみ", "options": ["おやすみ"], "type": "フレーズ", "example": "Gute Nacht, Mama. (お母さん、おやすみなさい)"}, {"word": "willkommen", "meaning": "ようこそ", "options": ["ようこそ"], "type": "フレーズ", "example": "Willkommen in Japan. (日本へようこそ)"}, {"word": "Glückwunsch", "meaning": "おめでとう", "options": ["おめでとう"], "type": "フレーズ", "example": "Glückwunsch zum Sieg! (優勝おめでとう！)"}, {"word": "los geht's", "meaning": "いこう！", "options": ["いこう！"], "type": "フレーズ", "example": "Los geht's zum Park! (公園に行こう！)"}, {"word": "Reise", "meaning": "りょこう", "options": ["りょこう"], "type": "単語", "example": "Die Reise macht Spaß. (旅行は楽しいです)"}, {"word": "lecker", "meaning": "おいしい", "options": ["おいしい"], "type": "単語", "example": "Dieser Kuchen ist lecker. (このケーキはおいしいです)"}, {"word": "beschäftigt", "meaning": "いそがしい", "options": ["いそがしい"], "type": "単語", "example": "Ich bin heute beschäftigt. (今日は忙しいです)"}, {"word": "wichtig", "meaning": "たいせつな", "options": ["たいせつな"], "type": "単語", "example": "Dieses Buch ist wichtig. (この本は大切です)"}, {"word": "schön", "meaning": "うつくしい", "options": ["うつくしい"], "type": "単語", "example": "Dieser Garten ist schön. (この庭は美しいです)"}, {"word": "schnell", "meaning": "はやい", "options": ["はやい"], "type": "単語", "example": "Dieser Zug ist schnell. (この電車は速いです)"}, {"word": "neu", "meaning": "あたらしい", "options": ["あたらしい"], "type": "単語", "example": "Dieses Buch ist neu. (この本は新しいです)"}, {"word": "alt", "meaning": "ふるい", "options": ["ふるい"], "type": "単語", "example": "Dieses Buch ist alt. (この本は古いです)"}, {"word": "einfach", "meaning": "かんたんな", "options": ["かんたんな"], "type": "単語", "example": "Diese Frage ist einfach. (この問題は簡単です)"}, {"word": "schwierig", "meaning": "むずかしい", "options": ["むずかしい"], "type": "単語", "example": "Diese Frage ist schwierig. (この問題は難しいです)"}]}, "ko": {"1": [{"word": "사과", "meaning": "りんご", "options": ["りんご"], "type": "単語", "example": "나는 사과를 먹어요. (わたしはりんごを食べます)"}, {"word": "고양이", "meaning": "ねこ", "options": ["ねこ"], "type": "単語", "example": "고양이는 귀여워요. (そのねこはかわいいです)"}, {"word": "개", "meaning": "いぬ", "options": ["いぬ"], "type": "単語", "example": "나는 개를 키워요. (わたしは犬を飼っています)"}, {"word": "책", "meaning": "ほん", "options": ["ほん"], "type": "単語", "example": "책을 읽으세요. (本を読みなさい)"}, {"word": "학교", "meaning": "がっこう", "options": ["がっこう"], "type": "単語", "example": "나는 학교에 가요. (わたしは学校に行きます)"}, {"word": "친구", "meaning": "ともだち", "options": ["ともだち"], "type": "単語", "example": "그는 내 친구예요. (彼はわたしの友達です)"}, {"word": "물", "meaning": "みず", "options": ["みず"], "type": "単語", "example": "물을 마시세요. (お水を飲みなさい)"}, {"word": "태양", "meaning": "たいよう", "options": ["たいよう"], "type": "単語", "example": "태양은 뜨거워요. (太陽はあついです)"}, {"word": "새", "meaning": "とり", "options": ["とり"], "type": "単語", "example": "새를 보세요. (鳥をごらんなさい)"}, {"word": "집", "meaning": "いえ", "options": ["いえ"], "type": "単語", "example": "여기가 우리 집이에요. (ここがわたしの家です)"}, {"word": "기쁘다", "meaning": "うれしい", "options": ["うれしい"], "type": "単語", "example": "나는 아주 기뻐요. (わたしはとてもうれしいです)"}, {"word": "달리다", "meaning": "はしる", "options": ["はしる"], "type": "単語", "example": "빨리 달리세요! (はやく走りなさい！)"}, {"word": "먹다", "meaning": "たべる", "options": ["たべる"], "type": "単語", "example": "같이 먹어요. (いっしょに食べよう)"}, {"word": "크다", "meaning": "おおきい", "options": ["おおきい"], "type": "単語", "example": "이 상자는 커요. (この箱は大きいです)"}, {"word": "작다", "meaning": "ちいさい", "options": ["ちいさい"], "type": "単語", "example": "그 개는 작아요. (その犬は小さいです)"}, {"word": "빨갛다", "meaning": "あかい", "options": ["あかい"], "type": "単語", "example": "그 꽃은 빨개요. (その花は赤いです)"}, {"word": "파랗다", "meaning": "あおい", "options": ["あおい"], "type": "単語", "example": "하늘은 파래요. (空は青いです)"}, {"word": "음악", "meaning": "おんがく", "options": ["おんがく"], "type": "単語", "example": "나는 음악을 들어요. (わたしは音楽を聴きます)"}, {"word": "엄마", "meaning": "おかあさん", "options": ["おかあさん"], "type": "単語", "example": "우리 엄마는 친절해요. (わたしのお母さんは親切です)"}, {"word": "아빠", "meaning": "おとうさん", "options": ["おとうさん"], "type": "単語", "example": "우리 아빠는 키가 커요. (わたしのお父さんは背が高いです)"}], "2": [{"word": "기차", "meaning": "でんしゃ", "options": ["でんしゃ"], "type": "単語", "example": "나는 기차를 타고 학교에 가요. (電車で学校に行きます)"}, {"word": "병원", "meaning": "びょういん", "options": ["びょういん"], "type": "単語", "example": "병원은 우리 집 근처에 있어요. (病院は家の近くです)"}, {"word": "도서관", "meaning": "としょかん", "options": ["としょかん"], "type": "単語", "example": "나는 도서관에서 책을 읽어요. (図書館で本を読みます)"}, {"word": "선생님", "meaning": "せんせい", "options": ["せんせい"], "type": "単語", "example": "그는 우리 선생님이에요. (彼はわたしの先生です)"}, {"word": "학생", "meaning": "がくせい", "options": ["がくせい"], "type": "単語", "example": "나는 학생이에요. (わたしは学生です)"}, {"word": "비", "meaning": "あめ", "options": ["あめ"], "type": "単語", "example": "비가 내리고 있어요. (雨が降っています)"}, {"word": "눈", "meaning": "ゆき", "options": ["ゆき"], "type": "単語", "example": "눈은 하얘요. (雪は白いです)"}, {"word": "바다", "meaning": "うみ", "options": ["うみ"], "type": "単語", "example": "나는 바다에서 수영해요. (海で泳ぎます)"}, {"word": "산", "meaning": "やま", "options": ["やま"], "type": "単語", "example": "그 산은 높아요. (その山は高いです)"}, {"word": "강", "meaning": "かわ", "options": ["かわ"], "type": "単語", "example": "그 강은 길어요. (その川は長いです)"}, {"word": "아침밥", "meaning": "あさごはん", "options": ["あさごはん"], "type": "単語", "example": "나는 일곱 시에 아침밥을 먹어요. (7時に朝ごはんを食べます)"}, {"word": "자전거", "meaning": "じてんしゃ", "options": ["じてんしゃ"], "type": "単語", "example": "나는 자전거를 타요. (自転車に乗ります)"}, {"word": "시계", "meaning": "とけい", "options": ["とけい"], "type": "単語", "example": "시계를 보세요. (時計を見なさい)"}, {"word": "가방", "meaning": "かばん", "options": ["かばん"], "type": "単語", "example": "가방 안에 넣으세요. (かばんの中に入れなさい)"}, {"word": "신발", "meaning": "くつ", "options": ["くつ"], "type": "単語", "example": "이 신발은 새것이에요. (この靴は新しいです)"}, {"word": "사다", "meaning": "かう", "options": ["かう"], "type": "単語", "example": "나는 책을 사요. (本を買います)"}, {"word": "수영하다", "meaning": "およぐ", "options": ["およぐ"], "type": "単語", "example": "나는 수영할 수 있어요. (わたしは泳げます)"}, {"word": "읽다", "meaning": "よむ", "options": ["よむ"], "type": "単語", "example": "나는 매일 책을 읽어요. (毎日本を読みます)"}, {"word": "쓰다", "meaning": "かく", "options": ["かく"], "type": "単語", "example": "이름을 쓰세요. (名前を書きなさい)"}, {"word": "노래하다", "meaning": "うたう", "options": ["うたう"], "type": "単語", "example": "그녀는 노래를 잘해요. (彼女は歌が上手です)"}], "3": [{"word": "안녕하세요", "meaning": "こんにちは", "options": ["こんにちは"], "type": "フレーズ", "example": "여러분, 안녕하세요! (みなさん、こんにちは！)"}, {"word": "감사합니다", "meaning": "ありがとう", "options": ["ありがとう"], "type": "フレーズ", "example": "정말 감사합니다. (どうもありがとう)"}, {"word": "부탁합니다", "meaning": "おねがいします", "options": ["おねがいします"], "type": "フレーズ", "example": "부탁합니다, 앉으세요. (おねがいします、座ってください)"}, {"word": "실례합니다", "meaning": "すみません", "options": ["すみません"], "type": "フレーズ", "example": "실례합니다, 역이 어디예요? (すみません、駅はどこですか？)"}, {"word": "안녕히 가세요", "meaning": "さようなら", "options": ["さようなら"], "type": "フレーズ", "example": "안녕히 가세요, 내일 봐요. (さようなら、また明日)"}, {"word": "좋은 아침이에요", "meaning": "おはよう", "options": ["おはよう"], "type": "フレーズ", "example": "선생님, 좋은 아침이에요. (先生、おはようございます)"}, {"word": "안녕히 주무세요", "meaning": "おやすみ", "options": ["おやすみ"], "type": "フレーズ", "example": "엄마, 안녕히 주무세요. (お母さん、おやすみなさい)"}, {"word": "환영합니다", "meaning": "ようこそ", "options": ["ようこそ"], "type": "フレーズ", "example": "일본에 오신 것을 환영합니다. (日本へようこそ)"}, {"word": "축하합니다", "meaning": "おめでとう", "options": ["おめでとう"], "type": "フレーズ", "example": "우승을 축하합니다! (優勝おめでとう！)"}, {"word": "갑시다", "meaning": "いこう！", "options": ["いこう！"], "type": "フレーズ", "example": "공원에 갑시다! (公園に行こう！)"}, {"word": "여행", "meaning": "りょこう", "options": ["りょこう"], "type": "単語", "example": "여행은 즐거워요. (旅行は楽しいです)"}, {"word": "맛있다", "meaning": "おいしい", "options": ["おいしい"], "type": "単語", "example": "이 케이크는 맛있어요. (このケーキはおいしいです)"}, {"word": "바쁘다", "meaning": "いそがしい", "options": ["いそがしい"], "type": "単語", "example": "오늘은 바빠요. (今日は忙しいです)"}, {"word": "소중하다", "meaning": "たいせつな", "options": ["たいせつな"], "type": "単語", "example": "이 책은 소중해요. (この本は大切です)"}, {"word": "아름답다", "meaning": "うつくしい", "options": ["うつくしい"], "type": "単語", "example": "이 정원은 아름다워요. (この庭は美しいです)"}, {"word": "빠르다", "meaning": "はやい", "options": ["はやい"], "type": "単語", "example": "이 기차는 빨라요. (この電車は速いです)"}, {"word": "새롭다", "meaning": "あたらしい", "options": ["あたらしい"], "type": "単語", "example": "이 책은 새로워요. (この本は新しいです)"}, {"word": "오래된", "meaning": "ふるい", "options": ["ふるい"], "type": "単語", "example": "이 책은 오래됐어요. (この本は古いです)"}, {"word": "쉽다", "meaning": "かんたんな", "options": ["かんたんな"], "type": "単語", "example": "이 문제는 쉬워요. (この問題は簡単です)"}, {"word": "어렵다", "meaning": "むずかしい", "options": ["むずかしい"], "type": "単語", "example": "이 문제는 어려워요. (この問題は難しいです)"}]}, "zh": {"1": [{"word": "苹果", "meaning": "りんご", "options": ["りんご"], "type": "単語", "example": "我吃一个苹果。 (わたしはりんごを食べます)", "sub": "píngguǒ"}, {"word": "猫", "meaning": "ねこ", "options": ["ねこ"], "type": "単語", "example": "这只猫很可爱。 (そのねこはかわいいです)", "sub": "māo"}, {"word": "狗", "meaning": "いぬ", "options": ["いぬ"], "type": "単語", "example": "我养了一只狗。 (わたしは犬を飼っています)", "sub": "gǒu"}, {"word": "书", "meaning": "ほん", "options": ["ほん"], "type": "単語", "example": "请读这本书。 (本を読みなさい)", "sub": "shū"}, {"word": "学校", "meaning": "がっこう", "options": ["がっこう"], "type": "単語", "example": "我去学校。 (わたしは学校に行きます)", "sub": "xuéxiào"}, {"word": "朋友", "meaning": "ともだち", "options": ["ともだち"], "type": "単語", "example": "他是我的朋友。 (彼はわたしの友達です)", "sub": "péngyou"}, {"word": "水", "meaning": "みず", "options": ["みず"], "type": "単語", "example": "请喝水。 (お水を飲みなさい)", "sub": "shuǐ"}, {"word": "太阳", "meaning": "たいよう", "options": ["たいよう"], "type": "単語", "example": "太阳很热。 (太陽はあついです)", "sub": "tàiyáng"}, {"word": "鸟", "meaning": "とり", "options": ["とり"], "type": "単語", "example": "请看那只鸟。 (鳥をごらんなさい)", "sub": "niǎo"}, {"word": "家", "meaning": "いえ", "options": ["いえ"], "type": "単語", "example": "这是我的家。 (ここがわたしの家です)", "sub": "jiā"}, {"word": "开心", "meaning": "うれしい", "options": ["うれしい"], "type": "単語", "example": "我很开心。 (わたしはとてもうれしいです)", "sub": "kāixīn"}, {"word": "跑", "meaning": "はしる", "options": ["はしる"], "type": "単語", "example": "快跑！ (はやく走りなさい！)", "sub": "pǎo"}, {"word": "吃", "meaning": "たべる", "options": ["たべる"], "type": "単語", "example": "我们一起吃吧。 (いっしょに食べよう)", "sub": "chī"}, {"word": "大", "meaning": "おおきい", "options": ["おおきい"], "type": "単語", "example": "这个箱子很大。 (この箱は大きいです)", "sub": "dà"}, {"word": "小", "meaning": "ちいさい", "options": ["ちいさい"], "type": "単語", "example": "那只狗很小。 (その犬は小さいです)", "sub": "xiǎo"}, {"word": "红色", "meaning": "あかい", "options": ["あかい"], "type": "単語", "example": "那朵花是红色的。 (その花は赤いです)", "sub": "hóngsè"}, {"word": "蓝色", "meaning": "あおい", "options": ["あおい"], "type": "単語", "example": "天空是蓝色的。 (空は青いです)", "sub": "lánsè"}, {"word": "音乐", "meaning": "おんがく", "options": ["おんがく"], "type": "単語", "example": "我听音乐。 (わたしは音楽を聴きます)", "sub": "yīnyuè"}, {"word": "妈妈", "meaning": "おかあさん", "options": ["おかあさん"], "type": "単語", "example": "我的妈妈很亲切。 (わたしのお母さんは親切です)", "sub": "māma"}, {"word": "爸爸", "meaning": "おとうさん", "options": ["おとうさん"], "type": "単語", "example": "我的爸爸很高。 (わたしのお父さんは背が高いです)", "sub": "bàba"}], "2": [{"word": "火车", "meaning": "でんしゃ", "options": ["でんしゃ"], "type": "単語", "example": "我坐火车去学校。 (電車で学校に行きます)", "sub": "huǒchē"}, {"word": "医院", "meaning": "びょういん", "options": ["びょういん"], "type": "単語", "example": "医院在我家附近。 (病院は家の近くです)", "sub": "yīyuàn"}, {"word": "图书馆", "meaning": "としょかん", "options": ["としょかん"], "type": "単語", "example": "我在图书馆看书。 (図書館で本を読みます)", "sub": "túshūguǎn"}, {"word": "老师", "meaning": "せんせい", "options": ["せんせい"], "type": "単語", "example": "他是我的老师。 (彼はわたしの先生です)", "sub": "lǎoshī"}, {"word": "学生", "meaning": "がくせい", "options": ["がくせい"], "type": "単語", "example": "我是学生。 (わたしは学生です)", "sub": "xuésheng"}, {"word": "雨", "meaning": "あめ", "options": ["あめ"], "type": "単語", "example": "正在下雨。 (雨が降っています)", "sub": "yǔ"}, {"word": "雪", "meaning": "ゆき", "options": ["ゆき"], "type": "単語", "example": "雪是白色的。 (雪は白いです)", "sub": "xué"}, {"word": "海", "meaning": "うみ", "options": ["うみ"], "type": "単語", "example": "我在海里游泳。 (海で泳ぎます)", "sub": "hǎi"}, {"word": "山", "meaning": "やま", "options": ["やま"], "type": "単語", "example": "那座山很高。 (その山は高いです)", "sub": "shān"}, {"word": "河", "meaning": "かわ", "options": ["かわ"], "type": "単語", "example": "那条河很长。 (その川は長いです)", "sub": "hé"}, {"word": "早饭", "meaning": "あさごはん", "options": ["あさごはん"], "type": "単語", "example": "我七点吃早饭。 (7時に朝ごはんを食べます)", "sub": "zǎofàn"}, {"word": "自行车", "meaning": "じてんしゃ", "options": ["じてんしゃ"], "type": "単語", "example": "我骑自行车。 (自転車に乗ります)", "sub": "zìxíngchē"}, {"word": "手表", "meaning": "とけい", "options": ["とけい"], "type": "単語", "example": "请看手表。 (時計を見なさい)", "sub": "shǒubiǎo"}, {"word": "包", "meaning": "かばん", "options": ["かばん"], "type": "単語", "example": "请放进包里。 (かばんの中に入れなさい)", "sub": "bāo"}, {"word": "鞋", "meaning": "くつ", "options": ["くつ"], "type": "単語", "example": "这双鞋是新的。 (この靴は新しいです)", "sub": "xié"}, {"word": "买", "meaning": "かう", "options": ["かう"], "type": "単語", "example": "我买书。 (本を買います)", "sub": "mǎi"}, {"word": "游泳", "meaning": "およぐ", "options": ["およぐ"], "type": "単語", "example": "我会游泳。 (わたしは泳げます)", "sub": "yóuyǒng"}, {"word": "读", "meaning": "よむ", "options": ["よむ"], "type": "単語", "example": "我每天读书。 (毎日本を読みます)", "sub": "dú"}, {"word": "写", "meaning": "かく", "options": ["かく"], "type": "単語", "example": "请写名字。 (名前を書きなさい)", "sub": "xiě"}, {"word": "唱歌", "meaning": "うたう", "options": ["うたう"], "type": "単語", "example": "她唱歌唱得很好。 (彼女は歌が上手です)", "sub": "chànggē"}], "3": [{"word": "你好", "meaning": "こんにちは", "options": ["こんにちは"], "type": "フレーズ", "example": "你好，大家！ (みなさん、こんにちは！)", "sub": "nǐ hǎo"}, {"word": "谢谢", "meaning": "ありがとう", "options": ["ありがとう"], "type": "フレーズ", "example": "谢谢你！ (どうもありがとう)", "sub": "xièxie"}, {"word": "请", "meaning": "おねがいします", "options": ["おねがいします"], "type": "フレーズ", "example": "请坐。 (おねがいします、座ってください)", "sub": "qǐng"}, {"word": "不好意思", "meaning": "すみません", "options": ["すみません"], "type": "フレーズ", "example": "不好意思，车站在哪里？ (すみません、駅はどこですか？)", "sub": "bù hǎoyìsi"}, {"word": "再见", "meaning": "さようなら", "options": ["さようなら"], "type": "フレーズ", "example": "再见，明天见。 (さようなら、また明日)", "sub": "zàijiàn"}, {"word": "早上好", "meaning": "おはよう", "options": ["おはよう"], "type": "フレーズ", "example": "老师，早上好。 (先生、おはようございます)", "sub": "zǎoshang hǎo"}, {"word": "晚安", "meaning": "おやすみ", "options": ["おやすみ"], "type": "フレーズ", "example": "妈妈，晚安。 (お母さん、おやすみなさい)", "sub": "wǎn'ān"}, {"word": "欢迎", "meaning": "ようこそ", "options": ["ようこそ"], "type": "フレーズ", "example": "欢迎来到日本。 (日本へようこそ)", "sub": "huānyíng"}, {"word": "恭喜", "meaning": "おめでとう", "options": ["おめでとう"], "type": "フレーズ", "example": "恭喜你赢了！ (優勝おめでとう！)", "sub": "gōngxǐ"}, {"word": "走吧", "meaning": "いこう！", "options": ["いこう！"], "type": "フレーズ", "example": "走吧，去公园！ (公園に行こう！)", "sub": "zǒu ba"}, {"word": "旅行", "meaning": "りょこう", "options": ["りょこう"], "type": "単語", "example": "旅行很开心。 (旅行は楽しいです)", "sub": "lǚxíng"}, {"word": "好吃", "meaning": "おいしい", "options": ["おいしい"], "type": "単語", "example": "这个蛋糕很好吃。 (このケーキはおいしいです)", "sub": "hǎochī"}, {"word": "忙", "meaning": "いそがしい", "options": ["いそがしい"], "type": "単語", "example": "我今天很忙。 (今日は忙しいです)", "sub": "máng"}, {"word": "重要", "meaning": "たいせつな", "options": ["たいせつな"], "type": "単語", "example": "这本书很重要。 (この本は大切です)", "sub": "zhòngyào"}, {"word": "美丽", "meaning": "うつくしい", "options": ["うつくしい"], "type": "単語", "example": "这个花园很美丽。 (この庭は美しいです)", "sub": "měilì"}, {"word": "快", "meaning": "はやい", "options": ["はやい"], "type": "単語", "example": "这列火车很快。 (この電車は速いです)", "sub": "kuài"}, {"word": "新", "meaning": "あたらしい", "options": ["あたらしい"], "type": "単語", "example": "这本书是新的。 (この本は新しいです)", "sub": "xīn"}, {"word": "旧", "meaning": "ふるい", "options": ["ふるい"], "type": "単語", "example": "这本书很旧。 (この本は古いです)", "sub": "jiù"}, {"word": "简单", "meaning": "かんたんな", "options": ["かんたんな"], "type": "単語", "example": "这个问题很简单。 (この問題は簡単です)", "sub": "jiǎndān"}, {"word": "难", "meaning": "むずかしい", "options": ["むずかしい"], "type": "単語", "example": "这个问题很难。 (この問題は難しいです)", "sub": "nán"}]}, "ja": {"1": [{"word": "学校", "meaning": "がっこう", "options": ["がっこう"], "type": "漢字", "example": "わたしは学校に行きます。"}, {"word": "先生", "meaning": "せんせい", "options": ["せんせい"], "type": "漢字", "example": "先生に聞きます。"}, {"word": "友達", "meaning": "ともだち", "options": ["ともだち"], "type": "漢字", "example": "友達と遊びます。"}, {"word": "電車", "meaning": "でんしゃ", "options": ["でんしゃ"], "type": "漢字", "example": "電車に乗ります。"}, {"word": "天気", "meaning": "てんき", "options": ["てんき"], "type": "漢字", "example": "今日は天気がいいです。"}, {"word": "家族", "meaning": "かぞく", "options": ["かぞく"], "type": "漢字", "example": "家族は4人です。"}, {"word": "病院", "meaning": "びょういん", "options": ["びょういん"], "type": "漢字", "example": "病院に行きます。"}, {"word": "図書館", "meaning": "としょかん", "options": ["としょかん"], "type": "漢字", "example": "図書館で本を読みます。"}, {"word": "公園", "meaning": "こうえん", "options": ["こうえん"], "type": "漢字", "example": "公園で遊びます。"}, {"word": "動物", "meaning": "どうぶつ", "options": ["どうぶつ"], "type": "漢字", "example": "動物が好きです。"}, {"word": "植物", "meaning": "しょくぶつ", "options": ["しょくぶつ"], "type": "漢字", "example": "植物に水をあげます。"}, {"word": "音楽", "meaning": "おんがく", "options": ["おんがく"], "type": "漢字", "example": "音楽を聴きます。"}, {"word": "勉強", "meaning": "べんきょう", "options": ["べんきょう"], "type": "漢字", "example": "日本語を勉強します。"}, {"word": "運動", "meaning": "うんどう", "options": ["うんどう"], "type": "漢字", "example": "運動は大切です。"}, {"word": "食事", "meaning": "しょくじ", "options": ["しょくじ"], "type": "漢字", "example": "食事の時間です。"}, {"word": "電話", "meaning": "でんわ", "options": ["でんわ"], "type": "漢字", "example": "電話をかけます。"}, {"word": "新聞", "meaning": "しんぶん", "options": ["しんぶん"], "type": "漢字", "example": "新聞を読みます。"}, {"word": "写真", "meaning": "しゃしん", "options": ["しゃしん"], "type": "漢字", "example": "写真を撮ります。"}, {"word": "部屋", "meaning": "へや", "options": ["へや"], "type": "漢字", "example": "部屋を掃除します。"}, {"word": "窓", "meaning": "まど", "options": ["まど"], "type": "漢字", "example": "窓を開けます。"}], "2": [{"word": "自転車", "meaning": "じてんしゃ", "options": ["じてんしゃ"], "type": "漢字", "example": "自転車で学校に行きます。"}, {"word": "飛行機", "meaning": "ひこうき", "options": ["ひこうき"], "type": "漢字", "example": "飛行機に乗ります。"}, {"word": "郵便局", "meaning": "ゆうびんきょく", "options": ["ゆうびんきょく"], "type": "漢字", "example": "郵便局で手紙を出します。"}, {"word": "消防署", "meaning": "しょうぼうしょ", "options": ["しょうぼうしょ"], "type": "漢字", "example": "消防署の前に消防車がいます。"}, {"word": "博物館", "meaning": "はくぶつかん", "options": ["はくぶつかん"], "type": "漢字", "example": "博物館で恐竜を見ました。"}, {"word": "水族館", "meaning": "すいぞくかん", "options": ["すいぞくかん"], "type": "漢字", "example": "水族館で魚を見ます。"}, {"word": "映画館", "meaning": "えいがかん", "options": ["えいがかん"], "type": "漢字", "example": "映画館で映画を見ます。"}, {"word": "体育館", "meaning": "たいいくかん", "options": ["たいいくかん"], "type": "漢字", "example": "体育館で運動します。"}, {"word": "交番", "meaning": "こうばん", "options": ["こうばん"], "type": "漢字", "example": "交番で道を聞きます。"}, {"word": "信号", "meaning": "しんごう", "options": ["しんごう"], "type": "漢字", "example": "信号を見て渡ります。"}, {"word": "横断歩道", "meaning": "おうだんほどう", "options": ["おうだんほどう"], "type": "漢字", "example": "横断歩道を渡ります。"}, {"word": "踏切", "meaning": "ふみきり", "options": ["ふみきり"], "type": "漢字", "example": "踏切で電車を待ちます。"}, {"word": "冷蔵庫", "meaning": "れいぞうこ", "options": ["れいぞうこ"], "type": "漢字", "example": "冷蔵庫に牛乳があります。"}, {"word": "洗濯機", "meaning": "せんたくき", "options": ["せんたくき"], "type": "漢字", "example": "洗濯機で服を洗います。"}, {"word": "辞書", "meaning": "じしょ", "options": ["じしょ"], "type": "漢字", "example": "辞書で調べます。"}, {"word": "地図", "meaning": "ちず", "options": ["ちず"], "type": "漢字", "example": "地図を見ます。"}, {"word": "鉛筆", "meaning": "えんぴつ", "options": ["えんぴつ"], "type": "漢字", "example": "鉛筆で書きます。"}, {"word": "筆箱", "meaning": "ふでばこ", "options": ["ふでばこ"], "type": "漢字", "example": "筆箱に鉛筆があります。"}, {"word": "眼鏡", "meaning": "めがね", "options": ["めがね"], "type": "漢字", "example": "眼鏡をかけます。"}, {"word": "懐中電灯", "meaning": "かいちゅうでんとう", "options": ["かいちゅうでんとう"], "type": "漢字", "example": "懐中電灯で照らします。"}], "3": [{"word": "一石二鳥", "meaning": "一つのことで二つ得をすること", "options": ["一つのことで二つ得をすること"], "type": "熟語", "example": "自転車で通学すると運動にもなって一石二鳥だ。"}, {"word": "十人十色", "meaning": "人それぞれ考えや好みが違うこと", "options": ["人それぞれ考えや好みが違うこと"], "type": "熟語", "example": "好きな色は十人十色だ。"}, {"word": "七転び八起き", "meaning": "何度失敗してもあきらめないこと", "options": ["何度失敗してもあきらめないこと"], "type": "熟語", "example": "七転び八起きの気持ちで練習する。"}, {"word": "一期一会", "meaning": "一生に一度の出会いを大切にすること", "options": ["一生に一度の出会いを大切にすること"], "type": "熟語", "example": "一期一会を大切にする。"}, {"word": "温故知新", "meaning": "古いことを学んで新しい知識を得ること", "options": ["古いことを学んで新しい知識を得ること"], "type": "熟語", "example": "温故知新という言葉が好きだ。"}, {"word": "自業自得", "meaning": "自分の行いの結果を自分が受けること", "options": ["自分の行いの結果を自分が受けること"], "type": "熟語", "example": "宿題をしなかったのは自業自得だ。"}, {"word": "継続は力なり", "meaning": "続けることが力になること", "options": ["続けることが力になること"], "type": "熟語", "example": "継続は力なり、毎日練習する。"}, {"word": "猿も木から落ちる", "meaning": "得意な人でも失敗すること", "options": ["得意な人でも失敗すること"], "type": "ことわざ", "example": "先生でも間違えるなんて、猿も木から落ちるだ。"}, {"word": "花より団子", "meaning": "見た目より中身や実質を大事にすること", "options": ["見た目より中身や実質を大事にすること"], "type": "ことわざ", "example": "彼女は花より団子のタイプだ。"}, {"word": "石の上にも三年", "meaning": "辛抱すればいつか成功すること", "options": ["辛抱すればいつか成功すること"], "type": "ことわざ", "example": "石の上にも三年の気持ちで続ける。"}, {"word": "急がば回れ", "meaning": "急ぐときほど安全な方法が早いこと", "options": ["急ぐときほど安全な方法が早いこと"], "type": "ことわざ", "example": "急がば回れで、安全な道を選んだ。"}, {"word": "早起きは三文の徳", "meaning": "早起きすると良いことがあること", "options": ["早起きすると良いことがあること"], "type": "ことわざ", "example": "早起きは三文の徳という。"}, {"word": "塵も積もれば山となる", "meaning": "小さなことも積み重なれば大きくなること", "options": ["小さなことも積み重なれば大きくなること"], "type": "ことわざ", "example": "塵も積もれば山となる、毎日少しずつ貯金する。"}, {"word": "笑う門には福来る", "meaning": "笑顔の家には幸運が訪れること", "options": ["笑顔の家には幸運が訪れること"], "type": "ことわざ", "example": "笑う門には福来る、笑顔で過ごそう。"}, {"word": "雨降って地固まる", "meaning": "大変なことの後に物事が良くなること", "options": ["大変なことの後に物事が良くなること"], "type": "ことわざ", "example": "雨降って地固まるで、仲直りできた。"}, {"word": "失敗は成功のもと", "meaning": "失敗から学んで成功につながること", "options": ["失敗から学んで成功につながること"], "type": "ことわざ", "example": "失敗は成功のもと、次は頑張る。"}, {"word": "三日坊主", "meaning": "すぐに飽きて続かないこと", "options": ["すぐに飽きて続かないこと"], "type": "ことわざ", "example": "三日坊主にならないように続ける。"}, {"word": "猫に小判", "meaning": "価値が分からない人に宝物をあげても無駄なこと", "options": ["価値が分からない人に宝物をあげても無駄なこと"], "type": "ことわざ", "example": "猫に小判で、猫は喜ばなかった。"}, {"word": "馬の耳に念仏", "meaning": "言い聞かせても効果がないこと", "options": ["言い聞かせても効果がないこと"], "type": "ことわざ", "example": "馬の耳に念仏で、全然聞いていない。"}, {"word": "初心忘るべからず", "meaning": "始めた頃の気持ちを忘れないこと", "options": ["始めた頃の気持ちを忘れないこと"], "type": "ことわざ", "example": "初心忘るべからず、丁寧に取り組む。"}]}};
+
+// --- ゲーム状態変数 ---
+let currentLang = localStorage.getItem('kotoba_lang_v1') || 'pt';
+if (!LANG_MAP[currentLang]) currentLang = 'pt';
+let currentLevel = 1;
+let currentQuestionIndex = 0;
+let score = 0;
+let currentQuestions = [];
+let learnedWords = JSON.parse(localStorage.getItem('kotoba_learned_v1') || '{}');
+let mistakeWords = JSON.parse(localStorage.getItem('kotoba_mistake_v1') || '{}');
+let gameMode = 'normal'; // 'normal' | 'listening' | 'review'
+let answerLog = [];
+
+function wordKey(lang, word) { return lang + ':' + word; }
+
+// サウンドエフェクト (Web Audio API)
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playSound(type) {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  if (type === 'correct') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+    osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.4);
+  } else if (type === 'wrong') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+    osc.frequency.setValueAtTime(196, audioCtx.currentTime + 0.15);
+    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.3);
+  }
+}
+
+// 音声再生（言語ごとに切り替え）
+function speakText(text, langId) {
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const lang = LANG_MAP[langId || currentLang];
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = lang.speech;
+  utterance.rate = 0.85;
+  const voices = speechSynthesis.getVoices();
+  const prefix = lang.speech.split('-')[0];
+  const voice = voices.find(v => v.lang === lang.speech) || voices.find(v => v.lang && v.lang.indexOf(prefix) === 0);
+  if (voice) utterance.voice = voice;
+  speechSynthesis.speak(utterance);
+}
+
+function speakCurrent() {
+  const q = currentQuestions[currentQuestionIndex];
+  if (q) speakText(q.word, q.lang || currentLang);
+}
+
+if ('speechSynthesis' in window) {
+  speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+
+// 画面切り替え
+function showScreen(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(screenId).classList.add('active');
+  document.getElementById('homeBtn').style.display = (screenId === 'homeScreen') ? 'none' : 'block';
+  window.scrollTo(0, 0);
+  if (screenId === 'homeScreen') refreshHome();
+}
+
+// レベルごとの習得数 {learned, total}
+function levelProgress(lang, level) {
+  const qs = QUESTION_DATABASE[lang][level];
+  return { learned: qs.filter(q => learnedWords[wordKey(lang, q.word)]).length, total: qs.length };
+}
+
+// 言語セレクター描画
+function renderLangGrid() {
+  const grid = document.getElementById('langGrid');
+  grid.innerHTML = '';
+  LANGS.forEach(l => {
+    const btn = document.createElement('button');
+    btn.className = 'lang-btn' + (l.id === currentLang ? ' active' : '');
+    const flag = document.createElement('span');
+    flag.className = 'lang-flag';
+    flag.textContent = l.flag;
+    const name = document.createElement('span');
+    name.textContent = l.name;
+    btn.appendChild(flag);
+    btn.appendChild(name);
+    btn.onclick = () => selectLang(l.id);
+    grid.appendChild(btn);
+  });
+}
+
+function selectLang(langId) {
+  currentLang = langId;
+  localStorage.setItem('kotoba_lang_v1', langId);
+  renderLangGrid();
+  refreshHome();
+}
+
+// ホームの進捗バー・レベル名・復習ボタンを最新状態にする
+function refreshHome() {
+  const lang = LANG_MAP[currentLang];
+  [1, 2, 3].forEach(lv => {
+    const p = levelProgress(currentLang, lv);
+    document.getElementById('progFill' + lv).style.width = (p.total ? (p.learned / p.total) * 100 : 0) + '%';
+    document.getElementById('progCount' + lv).textContent = `★ ${p.learned} / ${p.total}`;
+    document.getElementById('lvName' + lv).textContent = LEVEL_NAMES[lv];
+    document.getElementById('lvSub' + lv).textContent = '(' + LEVEL_SUBS[currentLang][lv] + ')';
+  });
+  document.getElementById('progTitle').textContent = `⭐ マスターした単語（${lang.name}）`;
+  document.getElementById('dictBtnLabel').textContent = `📖 ${lang.name} 単語ずかん`;
+  const keys = Object.keys(mistakeWords).filter(k => k.indexOf(currentLang + ':') === 0);
+  const btn = document.getElementById('reviewBtn');
+  btn.disabled = (keys.length === 0);
+  document.getElementById('reviewLabel').textContent = keys.length === 0
+    ? '🔁 まちがえた単語はありません'
+    : `🔁 まちがえた単語をふくしゅう（${keys.length}問）`;
+}
+
+// シャッフル（フィッシャー–イェーツ）
+function shuffleArray(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// 意味表示用（ふりがな行の高さをそろえる。プレーンテキストでもそのまま使える）
+function furiganaHTML(html) {
+  const tpl = document.createElement('template');
+  tpl.innerHTML = html;
+  const row = document.createElement('span');
+  row.className = 'frow';
+  [...tpl.content.childNodes].forEach(node => {
+    if (node.nodeType === Node.TEXT_NODE && node.textContent === '') return;
+    const seg = document.createElement('span');
+    seg.className = 'seg';
+    const rt = document.createElement('span');
+    rt.className = 'frt';
+    const bs = document.createElement('span');
+    bs.className = 'fbs';
+    if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'RUBY') {
+      const rtEl = node.querySelector('rt');
+      rt.textContent = rtEl ? rtEl.textContent : '';
+      bs.textContent = [...node.childNodes]
+        .filter(n => !(n.nodeType === Node.ELEMENT_NODE && n.tagName === 'RT'))
+        .map(n => n.textContent).join('');
+    } else {
+      rt.textContent = '';
+      bs.textContent = node.textContent;
+    }
+    seg.appendChild(rt);
+    seg.appendChild(bs);
+    row.appendChild(seg);
+  });
+  return row;
+}
+
+// ゲーム開始（mode: 'normal' | 'listening'）
+function startGame(level, mode) {
+  gameMode = mode || 'normal';
+  currentLevel = level;
+  currentQuestionIndex = 0;
+  score = 0;
+  answerLog = [];
+
+  const all = QUESTION_DATABASE[currentLang][level];
+  const unlearned = shuffleArray(all.filter(q => !learnedWords[wordKey(currentLang, q.word)]));
+  const learned = shuffleArray(all.filter(q => learnedWords[wordKey(currentLang, q.word)]));
+  currentQuestions = [...unlearned.slice(0, 10), ...learned.slice(0, Math.max(0, 10 - unlearned.length))]
+    .map(q => ({ ...q, level, lang: currentLang }));
+
+  const lang = LANG_MAP[currentLang];
+  document.getElementById('gradeBadge').textContent =
+    gameMode === 'listening' ? `${lang.flag} ${lang.name} レベル${level}・聞き取り` : `${lang.flag} ${lang.name} レベル${level}`;
+  showScreen('gameScreen');
+  renderQuestion();
+}
+
+// まちがい復習モード開始（今の言語の間違いから最大10問）
+function startReview() {
+  const items = [];
+  Object.keys(mistakeWords).forEach(key => {
+    if (key.indexOf(currentLang + ':') !== 0) return;
+    const lv = mistakeWords[key];
+    const word = key.slice(currentLang.length + 1);
+    const q = (QUESTION_DATABASE[currentLang][lv] || []).find(x => x.word === word);
+    if (q) items.push({ ...q, level: lv, lang: currentLang });
+  });
+  if (items.length === 0) return;
+
+  gameMode = 'review';
+  currentQuestionIndex = 0;
+  score = 0;
+  answerLog = [];
+  currentQuestions = shuffleArray(items).slice(0, 10);
+
+  const lang = LANG_MAP[currentLang];
+  document.getElementById('gradeBadge').textContent = `${lang.flag} ${lang.name} まちがいふくしゅう`;
+  showScreen('gameScreen');
+  renderQuestion();
+}
+
+// クイズ描画
+function renderQuestion() {
+  window.scrollTo(0, 0);
+  const q = currentQuestions[currentQuestionIndex];
+
+  document.getElementById('progressText').textContent = `第 ${currentQuestionIndex + 1} / ${currentQuestions.length} 問`;
+  document.getElementById('scoreText').textContent = `スコア: ${score}`;
+  document.getElementById('typeTag').textContent = q.type;
+  const subEl = document.getElementById('questionSub');
+  if (gameMode === 'listening') {
+    document.getElementById('questionWord').textContent = '？？？';
+    subEl.textContent = '';
+    setTimeout(() => speakText(q.word, q.lang || currentLang), 350);
+  } else {
+    document.getElementById('questionWord').textContent = q.word;
+    subEl.textContent = q.sub || '';
+  }
+
+  document.getElementById('explainCard').classList.remove('active');
+  document.getElementById('nextBtn').classList.remove('active');
+  document.getElementById('nextSpacer').classList.remove('active');
+
+  const container = document.getElementById('optionsContainer');
+  container.innerHTML = '';
+
+  let dummyOptions = [];
+  const allItems = QUESTION_DATABASE[q.lang || currentLang][q.level || currentLevel];
+  let guard = 0;
+  while (dummyOptions.length < 3 && guard < 200) {
+    guard++;
+    const randomItem = allItems[Math.floor(Math.random() * allItems.length)];
+    const cleanMeaning = randomItem.options[0];
+    if (cleanMeaning !== q.options[0] && !dummyOptions.some(d => d.text === cleanMeaning)) {
+      dummyOptions.push({ text: cleanMeaning, html: randomItem.meaning });
+    }
+  }
+
+  const choices = shuffleArray([{ text: q.options[0], html: q.meaning }, ...dummyOptions]);
+
+  choices.forEach(choice => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.appendChild(furiganaHTML(choice.html));
+    btn.dataset.value = choice.text;
+    btn.onclick = () => checkAnswer(choice.text, q.options[0], btn);
+    container.appendChild(btn);
+  });
+}
+
+// 回答チェック
+function checkAnswer(selected, correct, clickedBtn) {
+  const q = currentQuestions[currentQuestionIndex];
+  const buttons = document.querySelectorAll('.opt-btn');
+  buttons.forEach(b => b.onclick = null);
+
+  const isCorrect = (selected === correct);
+  answerLog.push({ word: q.word, meaning: q.meaning, correct: isCorrect, lang: q.lang || currentLang });
+
+  if (gameMode === 'listening') {
+    document.getElementById('questionWord').textContent = q.word;
+    document.getElementById('questionSub').textContent = q.sub || '';
+  }
+
+  const key = wordKey(q.lang || currentLang, q.word);
+  if (isCorrect) {
+    playSound('correct');
+    clickedBtn.classList.add('correct');
+    score += 10;
+
+    learnedWords[key] = true;
+    localStorage.setItem('kotoba_learned_v1', JSON.stringify(learnedWords));
+
+    if (mistakeWords[key]) {
+      delete mistakeWords[key];
+      localStorage.setItem('kotoba_mistake_v1', JSON.stringify(mistakeWords));
+    }
+
+    document.getElementById('explainTitle').textContent = '⭕ せいかい！';
+    document.getElementById('explainTitle').style.color = '#2ECC71';
+  } else {
+    playSound('wrong');
+    clickedBtn.classList.add('wrong');
+
+    mistakeWords[key] = q.level || currentLevel;
+    localStorage.setItem('kotoba_mistake_v1', JSON.stringify(mistakeWords));
+
+    buttons.forEach(b => {
+      if (b.dataset.value === correct) b.classList.add('correct');
+    });
+
+    document.getElementById('explainTitle').textContent = '❌ おしい！';
+    document.getElementById('explainTitle').style.color = '#E74C3C';
+  }
+
+  const explainMeaningEl = document.getElementById('explainMeaning');
+  explainMeaningEl.innerHTML = '<strong>意味:</strong>';
+  explainMeaningEl.appendChild(furiganaHTML(q.meaning));
+  document.getElementById('explainExample').textContent = q.example;
+  document.getElementById('explainCard').classList.add('active');
+
+  document.getElementById('nextBtn').classList.add('active');
+  document.getElementById('nextSpacer').classList.add('active');
+
+  requestAnimationFrame(() => {
+    document.getElementById('explainCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+}
+
+// 次の問題へ
+function nextQuestion() {
+  currentQuestionIndex++;
+  if (currentQuestionIndex < currentQuestions.length) {
+    renderQuestion();
+  } else {
+    showResult();
+  }
+}
+
+// クリア画面表示
+function showResult() {
+  showScreen('resultScreen');
+  const total = currentQuestions.length;
+  const correctCount = score / 10;
+
+  document.getElementById('resultScore').textContent = `${total}問ちゅう ${correctCount}問 せいかい！`;
+
+  let rank = 'C';
+  let comment = 'つぎは もっと たかいスコアを めざそう！';
+
+  if (correctCount === total) {
+    rank = 'S';
+    comment = 'すばらしい！パーフェクトクリアです！';
+  } else if (correctCount >= total * 0.8) {
+    rank = 'A';
+    comment = 'すごい！あとすこしで パーフェクト！';
+  } else if (correctCount >= total * 0.6) {
+    rank = 'B';
+    comment = 'よくがんばったね！なんども チャレンジしよう！';
+  }
+
+  document.getElementById('resultRank').textContent = rank;
+  document.getElementById('resultComment').textContent = comment;
+
+  const recap = document.getElementById('resultRecap');
+  recap.innerHTML = '';
+  answerLog.forEach(entry => {
+    const item = document.createElement('div');
+    item.className = 'recap-item';
+    const mark = document.createElement('span');
+    mark.className = 'recap-mark ' + (entry.correct ? 'ok' : 'ng');
+    mark.textContent = entry.correct ? '○' : '×';
+    const body = document.createElement('div');
+    body.className = 'recap-body';
+    const wordEl = document.createElement('div');
+    wordEl.className = 'recap-word';
+    wordEl.textContent = entry.word;
+    const meanEl = document.createElement('div');
+    meanEl.className = 'recap-meaning';
+    meanEl.appendChild(furiganaHTML(entry.meaning));
+    body.appendChild(wordEl);
+    body.appendChild(meanEl);
+    const speak = document.createElement('button');
+    speak.className = 'recap-speak';
+    speak.textContent = '🔊';
+    speak.title = '発音をきく';
+    speak.onclick = () => speakText(entry.word, entry.lang);
+    item.appendChild(mark);
+    item.appendChild(body);
+    item.appendChild(speak);
+    recap.appendChild(item);
+  });
+}
+
+// 単語図鑑表示
+function openDictionary() {
+  showScreen('dictScreen');
+  filterDict(1, document.querySelectorAll('.dict-tab')[0]);
+}
+
+function filterDict(level, tabElem) {
+  document.querySelectorAll('.dict-tab').forEach(t => t.classList.remove('active'));
+  if (tabElem) tabElem.classList.add('active');
+
+  const lang = LANG_MAP[currentLang];
+  document.getElementById('dictTitle').textContent = `${lang.flag} ${lang.name} 単語ずかん`;
+
+  const p = levelProgress(currentLang, level);
+  document.getElementById('dictProgLabel').textContent = `レベル${level}`;
+  document.getElementById('dictProgFill').style.width = (p.total ? (p.learned / p.total) * 100 : 0) + '%';
+  document.getElementById('dictProgCount').textContent = `★ ${p.learned} / ${p.total}`;
+
+  const listContainer = document.getElementById('dictList');
+  listContainer.innerHTML = '';
+
+  const questions = QUESTION_DATABASE[currentLang][level];
+  questions.forEach(q => {
+    const isLearned = learnedWords[wordKey(currentLang, q.word)] || false;
+    const item = document.createElement('div');
+    item.className = 'dict-item';
+    const left = document.createElement('div');
+    const en = document.createElement('div');
+    en.className = 'dict-en';
+    en.textContent = q.word + ' ';
+    const typeSpan = document.createElement('span');
+    typeSpan.style.cssText = 'font-size:0.75rem; color:#888;';
+    typeSpan.textContent = '(' + q.type + ')';
+    en.appendChild(typeSpan);
+    if (q.sub) {
+      const subSpan = document.createElement('span');
+      subSpan.className = 'dict-sub';
+      subSpan.textContent = ' ' + q.sub;
+      en.appendChild(subSpan);
+    }
+    const jp = document.createElement('div');
+    jp.className = 'dict-jp';
+    jp.appendChild(furiganaHTML(q.meaning));
+    left.appendChild(en);
+    left.appendChild(jp);
+    const right = document.createElement('div');
+    right.className = 'dict-right';
+    const speakBtn = document.createElement('button');
+    speakBtn.className = 'dict-speak-btn';
+    speakBtn.title = '発音をきく';
+    speakBtn.textContent = '🔊';
+    speakBtn.onclick = () => speakText(q.word, currentLang);
+    const star = document.createElement('div');
+    star.className = 'dict-star' + (isLearned ? ' learned' : '');
+    star.textContent = isLearned ? '★ マスター' : '☆';
+    right.appendChild(speakBtn);
+    right.appendChild(star);
+    item.appendChild(left);
+    item.appendChild(right);
+    listContainer.appendChild(item);
+  });
+}
+
+// 初期表示
+renderLangGrid();
+refreshHome();
+</script>
+
+<script>
+// オフライン対応（Service Worker登録）
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+</script>
+
+</body>
+</html>
