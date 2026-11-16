@@ -762,32 +762,32 @@
         <div class="prog-row">
           <span class="prog-label">レベル1</span>
           <div class="prog-bar"><div class="prog-fill" id="progFill1"></div></div>
-          <span class="prog-count" id="progCount1">★ 0 / 98</span>
+          <span class="prog-count" id="progCount1">★ 0 / 100</span>
         </div>
         <div class="prog-row">
           <span class="prog-label">レベル2</span>
           <div class="prog-bar"><div class="prog-fill" id="progFill2"></div></div>
-          <span class="prog-count" id="progCount2">★ 0 / 97</span>
+          <span class="prog-count" id="progCount2">★ 0 / 100</span>
         </div>
         <div class="prog-row">
           <span class="prog-label">レベル3</span>
           <div class="prog-bar"><div class="prog-fill" id="progFill3"></div></div>
-          <span class="prog-count" id="progCount3">★ 0 / 96</span>
+          <span class="prog-count" id="progCount3">★ 0 / 100</span>
         </div>
       </div>
 
       <div class="menu-group">
         <button class="btn btn-grade btn-grade-5" onclick="startGame(1)">
           <span class="grade-name" id="lvName1">レベル1 入門</span>
-          <span class="grade-sub" id="lvSub1">(基礎単語 20問)</span>
+          <span class="grade-sub" id="lvSub1">(基礎単語 100問)</span>
         </button>
         <button class="btn btn-grade btn-grade-4" onclick="startGame(2)">
           <span class="grade-name" id="lvName2">レベル2 初級</span>
-          <span class="grade-sub" id="lvSub2">(日常生活の単語 20問)</span>
+          <span class="grade-sub" id="lvSub2">(日常生活の単語 100問)</span>
         </button>
         <button class="btn btn-grade btn-grade-3" onclick="startGame(3)">
           <span class="grade-name" id="lvName3">レベル3 中級</span>
-          <span class="grade-sub" id="lvSub3">(表現・フレーズ 20問)</span>
+          <span class="grade-sub" id="lvSub3">(表現・フレーズ 100問)</span>
         </button>
         <button class="btn btn-review" id="reviewBtn" onclick="startReview()" disabled>
           <span id="reviewLabel">🔁 まちがえた単語をふくしゅう（0問）</span>
@@ -863,7 +863,7 @@
         <div class="prog-row">
           <span class="prog-label" id="dictProgLabel">レベル1</span>
           <div class="prog-bar"><div class="prog-fill" id="dictProgFill"></div></div>
-          <span class="prog-count" id="dictProgCount">★ 0 / 98</span>
+          <span class="prog-count" id="dictProgCount">★ 0 / 100</span>
         </div>
       </div>
 
@@ -1000,7 +1000,7 @@ function refreshHome() {
     document.getElementById('progFill' + lv).style.width = (p.total ? (p.learned / p.total) * 100 : 0) + '%';
     document.getElementById('progCount' + lv).textContent = `★ ${p.learned} / ${p.total}`;
     document.getElementById('lvName' + lv).textContent = LEVEL_NAMES[lv];
-    document.getElementById('lvSub' + lv).textContent = '(' + LEVEL_SUBS[currentLang][lv] + ' ' + DB[currentLang][lv].length + '問）';
+    document.getElementById('lvSub' + lv).textContent = '(' + LEVEL_SUBS[currentLang][lv] + ' ' + QUESTION_DATABASE[currentLang][lv].length + '問）';
   });
   document.getElementById('progTitle').textContent = `⭐ マスターした単語（${lang.name}）`;
   document.getElementById('dictBtnLabel').textContent = `📖 ${lang.name} 単語ずかん`;
